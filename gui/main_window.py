@@ -1,9 +1,9 @@
-# my_app/gui/main_window.py
-
 import tkinter as tk
 from tkinter import ttk
+from PIL import Image, ImageTk
 
 from core.app_controller import AppController
+from config.app_config import APP_LOGO
 
 
 class MainWindow(tk.Tk):
@@ -14,6 +14,20 @@ class MainWindow(tk.Tk):
         self.geometry("650x250")
         self.minsize(650, 300)
         self.maxsize(1000, 900)
+
+        # --- УСТАНОВКА ЛОГОТИПА В ЗАГОЛОВОК ОКНА ---
+        try:
+            # 1. Загружаем изображение
+            logo_image = Image.open(APP_LOGO)
+
+            # 2. Преобразуем в PhotoImage
+            logo_photo = ImageTk.PhotoImage(logo_image)
+
+            # 3. Устанавливаем иконку окна
+            self.wm_iconphoto(True, logo_photo)  # True означает, что иконка
+            # будет использоваться для всех окон
+        except Exception as e:
+            print(f"Ошибка загрузки логотипа: {e}")
 
         self.protocol("WM_DELETE_WINDOW", self.on_closing)
 
