@@ -1,3 +1,5 @@
+# app/gui/main_module.py
+
 import tkinter as tk
 from tkinter import ttk
 from typing import Type
@@ -27,7 +29,9 @@ class MainModuleUI:
         self._setup_scrollable_area()
 
     def _setup_scrollable_area(self):
-        """Настраивает Canvas и Scrollbar для прокрутки содержимого модулей."""
+        """
+        Настраивает Canvas и Scrollbar для прокрутки содержимого модулей.
+        """
         # --- НАСТРОЙКА СКРОЛЛИНГА ---
         self.canvas = tk.Canvas(self.content_frame)
         scrollbar = ttk.Scrollbar(
@@ -57,7 +61,9 @@ class MainModuleUI:
         self._update_scrollregion()
 
     def _update_scrollregion(self):
-        """Обновляет область прокрутки канваса."""
+        """
+        Обновляет область прокрутки Canvas.
+        """
         if self.canvas:
             self.canvas.update_idletasks()
 
@@ -71,7 +77,9 @@ class MainModuleUI:
             self.canvas.config(scrollregion=self.canvas.bbox("all"))
 
     def _on_mousewheel(self, event: tk.Event):
-        """Обработчик прокрутки колеса мыши."""
+        """
+        Обработчик прокрутки колеса мыши.
+        """
         # Прокручиваем Canvas, даже если мышь находится над дочерним фреймом.
         # event.delta обычно равен 120 (вверх) или -120 (вниз) на Windows
         self.canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
@@ -154,7 +162,9 @@ class MainModuleUI:
         return new_module_frame, body_frame, header_frame
 
     def remove_module_frame(self, frame_to_remove: ttk.Frame):
-        """Удаляет фрейм модуля из UI."""
+        """
+        Удаляет фрейм модуля из UI.
+        """
         try:
             frame_to_remove.destroy()
         except tk.TclError:

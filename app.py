@@ -1,3 +1,5 @@
+# app/app.py
+
 import sys
 import traceback
 
@@ -19,4 +21,7 @@ def main():
 
 
 if __name__ == "__main__":
+    """
+    Запускает приложение.
+    """
     main()

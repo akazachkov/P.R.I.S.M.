@@ -1,3 +1,5 @@
+# app/core/module_loader.py
+
 import importlib.util
 import inspect
 from pathlib import Path
@@ -7,7 +9,9 @@ from typing import Dict, Type
 # Определяем BaseModule здесь, чтобы избежать циклических импортов
 # и чтобы все модули могли легко его импортировать.
 class BaseModule:
-    """Абстрактный базовый класс для всех подключаемых модулей."""
+    """
+    Абстрактный базовый класс для всех подключаемых модулей.
+    """
     name: str = None
     label: str = None
     button_text: str = None
@@ -18,8 +22,10 @@ class BaseModule:
 
 
 def import_modules(modules_dir: Path) -> Dict[str, Type[BaseModule]]:
-    """Сканирует папку с модулями и импортирует все Python-файлы.
-    Возвращает словарь {имя_модуля: класс_модуля}."""
+    """
+    Сканирует папку с модулями и импортирует все Python-файлы.
+    Возвращает словарь {имя_модуля: класс_модуля}.
+    """
     if not modules_dir.exists():
         modules_dir.mkdir(exist_ok=True)
 

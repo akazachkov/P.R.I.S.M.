@@ -1,4 +1,4 @@
-# my_app/core/app_controller.py
+# app/core/app_controller.py
 
 import tkinter as tk
 import threading
@@ -32,7 +32,9 @@ class AppController:
         self._start_queue_processor()
 
     def _start_queue_processor(self):
-        """Запускаем внутренний цикл обработки команд из очереди."""
+        """
+        Запускаем внутренний цикл обработки команд из очереди.
+        """
         def _process():
             while True:
                 command_func, *command_args = self.command_queue.get()
@@ -54,7 +56,9 @@ class AppController:
         self.main_window = window
 
     def create_ui(self, modules_frame: tk.Frame, content_frame: tk.Frame):
-        """Создает UI для модулей."""
+        """
+        Создает UI для модулей.
+        """
         # Создаем делегат UI и передаем ему фреймы
         self.ui_handler = MainModuleUI(modules_frame, content_frame)
 
@@ -68,7 +72,9 @@ class AppController:
                 )
 
     def _handle_module_click(self, module_class: Type[BaseModule]):
-        """Обработчик нажатия кнопки модуля"""
+        """
+        Обработчик нажатия кнопки модуля.
+        """
         def _try_open():
             acquired = self.module_semaphore.acquire(blocking=True, timeout=0)
             if not acquired:
@@ -83,7 +89,8 @@ class AppController:
         threading.Thread(target=_try_open, daemon=True).start()
 
     def _open_module_ui(self, module_class: Type[BaseModule]):
-        """Выполняется в GUI-потоке для создания и отображения фрейма модуля.
+        """
+        Выполняется в GUI-потоке для создания и отображения фрейма модуля.
         """
         if not self.ui_handler:
             print(
@@ -126,7 +133,9 @@ class AppController:
             self.main_window.event_generate(self.main_window._resize_event)
 
     def _remove_pinned_frame(self, frame_to_remove: ttk.Frame):
-        """Вспомогательный метод для удаления фрейма и освобождения слота."""
+        """
+        Вспомогательный метод для удаления фрейма и освобождения слота.
+        """
         # Проверка на ui_handler:
         if frame_to_remove in self.pinned_module_frames and self.ui_handler:
             # Используем делегат UI для физического удаления виджета
@@ -146,6 +155,8 @@ class AppController:
             self.main_window.event_generate(self.main_window._resize_event)
 
     def on_app_close(self):
-        """Вызывается при закрытии приложения."""
+        """
+        Вызывается при закрытии приложения.
+        """
         self.command_queue.put((None,))
         print("Приложение закрывается.")

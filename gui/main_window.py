@@ -1,3 +1,5 @@
+# app/gui/main_window.py
+
 import tkinter as tk
 from tkinter import ttk
 from PIL import Image, ImageTk
@@ -7,6 +9,9 @@ from config.app_config import APP_LOGO
 
 
 class MainWindow(tk.Tk):
+    """
+    Управляет параметрами основного окна приложения.
+    """
     def __init__(self, controller: AppController):
         super().__init__()
         self.controller = controller
@@ -68,7 +73,7 @@ class MainWindow(tk.Tk):
 
     def _resize_to_content(self, event=None):
         """
-        Изменяет размер главного окна, чтобы оно соответствовало высоте
+        Изменяет размер основного окна, чтобы оно соответствовало высоте
         содержимого в Canvas, где находятся фреймы модулей.
         """
 
@@ -80,7 +85,7 @@ class MainWindow(tk.Tk):
 
         # 1. Убеждаемся, что все виджеты обновили свою геометрию.
         # Это нужно, чтобы `scrollregion` стала актуальной.
-        # Мы должны обновлять именно `canvas`, так как именно он содержит
+        # Мы должны обновлять именно Canvas, так как именно он содержит
         # контент.
         self.controller.ui_handler.canvas.update_idletasks()
 
@@ -137,7 +142,7 @@ class MainWindow(tk.Tk):
         if new_height != self.winfo_height():
             self.geometry(f"{current_width}x{new_height}")
 
-            # Для отладки можно раскомментировать:
+            # Для отладки:
             print(f"[Отладка] Высота содержимого: {required_content_height}")
             print(f"[Отладка] Требуемая высота окна: {required_window_height}")
             print(f"[Отладка] Новый размер окна: {current_width}x{new_height}")
