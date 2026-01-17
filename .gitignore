@@ -8,6 +8,8 @@ wheels/
 
 # Virtual environments
 .venv
+uv.lock
+.python-version
 
 # Только для локальной работы
 config_paths_name_local.toml
