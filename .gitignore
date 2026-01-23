@@ -15,3 +15,4 @@ uv.lock
 config_paths_name_local.toml
 _test
 .vscode
+modules/

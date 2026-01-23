@@ -113,24 +113,29 @@ class MainModuleUI:
         Создает кнопку и метку для модуля на левой панели.
         Вызывается AppController'ом.
         """
-        label_text = getattr(module_class, 'button_label', module_name.title())
-        button_text = getattr(module_class, 'button_text', label_text)
+        button_text = getattr(module_class, 'button_text', module_name.title())
 
         # --- Создание лейбла над кнопкой открытия модуля ---
-        label = tk.Label(
-            self.modules_frame,
-            text=label_text,
-            anchor='w',
-            wraplength=WRAPLENGHT_BUTTON,  # Максимальная ширина блока лейбла.
-            justify=tk.CENTER,  # Выравнивание текста по центру.
-            relief='groove'  # Стиль бордюра лейбла.
-        )
-        label.pack(pady=(5, 0))
+        # Проверяем наличие "button_label" в файле модуля.
+        if hasattr(module_class, 'button_label') and module_class.button_label:
+            label_text = module_class.button_label
+
+            # Если "button_label" есть, то создаём лейбл.
+            label = tk.Label(
+                self.modules_frame,
+                text=label_text,
+                anchor='w',
+                wraplength=WRAPLENGHT_BUTTON,  # Максимальная ширина лейбла.
+                justify=tk.CENTER,  # Выравнивание текста по центру.
+                relief='groove'  # Стиль бордюра лейбла.
+            )
+            label.pack(pady=(5, 0))
 
         # --- Создание кнопки ---
         button = tk.Button(
             self.modules_frame,
             text=button_text,
+            wraplength=WRAPLENGHT_BUTTON,  # Максимальная ширина кнопки.
             command=lambda m=module_class: on_button_click_handler(m)
         )
         button.pack(pady=5)
