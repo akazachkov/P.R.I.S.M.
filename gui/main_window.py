@@ -4,10 +4,12 @@ import tkinter as tk
 from tkinter import ttk
 
 from core.app_controller import AppController
-from gui.elements.logo_manager import setup_window_logo
 from config.app_config import (
     GEOMETRY_MAIN_WINDOW, MAIN_WINDOW_MAXSIZE, MAX_CONCURRENT_MODULES
 )
+
+# На перспективу:
+# from gui.elements.logo_manager import setup_window_logo
 
 
 class MainWindow(tk.Tk):
@@ -34,8 +36,8 @@ class MainWindow(tk.Tk):
         self.minsize(*_parse_geometry(GEOMETRY_MAIN_WINDOW))
         self.maxsize(*_parse_geometry(MAIN_WINDOW_MAXSIZE))
 
-        # Установка лого в заголовок окна (закомментировать, если не нужно).
-        setup_window_logo(self)
+        # Установка лого в заголовок окна (на перспективу).
+        # setup_window_logo(self)
 
         # Создаём обработчик события закрытия окна.
         self.protocol("WM_DELETE_WINDOW", self.on_closing)

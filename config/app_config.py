@@ -12,7 +12,7 @@ CONFIG_PATHS_NAME = PROJECT_ROOT / "config" / "config_paths_name.toml"
 
 # Название приложения, логотип в строке заголовка.
 APP_TITLE = "The F.I.R. v.2 (File Interaction Runner)"
-APP_LOGO = PROJECT_ROOT / "images" / "logo_small.png"
+# APP_LOGO = PROJECT_ROOT / "images" / "logo.png"
 
 # Геометрия приложения.
 GEOMETRY_MAIN_WINDOW = "700x500"  # Начальный/минимальный размер окна.
