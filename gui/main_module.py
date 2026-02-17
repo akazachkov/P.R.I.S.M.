@@ -188,7 +188,7 @@ class MainModuleUI:
             width=2,
             command=lambda: self._remove_module_frame_with_slot(frame)
         )
-        close_button.pack(side='right')
+        close_button.pack(side='right', anchor='ne')
 
         # Рассчитываем ширину лейбла с заголовком и создаем его.
         try:
@@ -239,7 +239,7 @@ class MainModuleUI:
             width=2,
             command=lambda: self._remove_module_frame_with_slot(container)
         )
-        close_button.pack(side='right')
+        close_button.pack(side='right', anchor='ne')
 
         # Лейбл с заголовком.
         lbl_title = ttk.Label(

@@ -1,6 +1,6 @@
 [project]
 name = "P.R.I.S.M."
-version = "1.0.0"
+version = "1.0.1"
 description = "Наследник The F.I.R."
 readme = "README.md"
 requires-python = ">=3.14"
