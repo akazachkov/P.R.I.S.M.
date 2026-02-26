@@ -1,3 +1,5 @@
+# app/core/module_api.py
+
 import tomllib
 from pathlib import Path
 from typing import Any, List, Tuple, Union, Optional

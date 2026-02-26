@@ -64,8 +64,18 @@ def import_modules(modules_dir: Path) -> Dict[str, Type[BaseModule]]:
                             '_',
                             ' '
                         ).title()
+
+                    # Определяем тип модуля по имени файла
+                    if file_path.stem.startswith('tab_'):
+                        module_class.is_tab = True   # Модуль-вкладка
+                    else:
+                        module_class.is_tab = False  # Модуль-фрейм
+
                     loaded_modules[file_path.stem] = module_class
-                    print(f"Загружен модуль: {file_path.stem}")
+                    print(
+                        f"Загружен модуль: {file_path.stem} (тип: "
+                        f"{'вкладка' if module_class.is_tab else 'фрейм'})"
+                    )
         except Exception as e:
             print(f"Ошибка загрузки модуля {file_path}: {e}")
     return loaded_modules

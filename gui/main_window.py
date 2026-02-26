@@ -45,6 +45,8 @@ class MainWindow(tk.Tk):
         # Убедимся, что AppController будет знать о MainWindow после его
         # создания
         self.controller.set_main_window(self)
+        # Добавляем передачу notebook в контроллер
+        self.controller.set_notebook(self.notebook)
 
         # --- Настройка масштабирования фреймов подключаемых модулей ---
         # Добавляем привязку к событию "ручного" изменения размера окна
