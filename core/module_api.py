@@ -38,7 +38,7 @@ class ModuleAPI:
     # ------------------------------------------------------------------
     # Работа с папками и файлами
     # ------------------------------------------------------------------
-    def ensure_directory(
+    def ensure_directory_exists(
             self,
             base_path: Union[str, Path],
             subfolder: str
@@ -46,7 +46,7 @@ class ModuleAPI:
         """Создаёт поддиректорию, если её нет."""
         return ensure_directory_exists(base_path, subfolder)
 
-    def open_file_or_folder(self, path: Union[str, Path]) -> bool:
+    def open_file_and_folder(self, path: Union[str, Path]) -> bool:
         """Открывает файл или папку в проводнике."""
         return open_file_and_folder(path)
 
