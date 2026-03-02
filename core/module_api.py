@@ -1,5 +1,6 @@
 # app/core/module_api.py
 
+import datetime
 import tomllib
 from pathlib import Path
 from typing import Any, List, Tuple, Union, Optional
@@ -106,5 +107,6 @@ class ModuleAPI:
     # Логирование
     # ------------------------------------------------------------------
     def log(self, message: str, level: str = "info"):
-        """Записывает сообщение в лог (пока в консоль)."""
-        print(f"[API {level}] {message}")
+        """Записывает сообщение в лог (пока только в консоль)."""
+        timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        print(f"[{timestamp}] [API {level}] {message}")
