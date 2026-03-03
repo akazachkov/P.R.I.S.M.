@@ -3,9 +3,10 @@
 import datetime
 import tomllib
 from pathlib import Path
-from typing import Any, List, Tuple, Union, Optional
+from typing import Any, List, Tuple, Union, Optional, Callable
 
 from config.app_config import CONFIG_PATHS_NAME
+from core.elements.background_task import BackgroundTaskManager
 from core.elements.convert_register_to_list import transform_excel_list
 from core.elements.copy_files import copy_files
 from core.elements.working_with_folders import (
@@ -22,6 +23,7 @@ class ModuleAPI:
     def __init__(self, controller, main_window):
         self._controller = controller
         self._main_window = main_window
+        self._bg_manager = BackgroundTaskManager(self)
         self._config = None
 
     # ------------------------------------------------------------------
@@ -102,6 +104,40 @@ class ModuleAPI:
     def schedule_gui_task(self, func, *args):
         """Планирует выполнение функции в главном потоке GUI."""
         self._controller.command_queue.put((func, *args))
+
+    def run_in_background(
+        self,
+        target: Callable,
+        on_success: Optional[Callable] = None,
+        on_error: Optional[Callable] = None,
+        *args,
+        **kwargs
+    ) -> None:
+        """
+        Запускает целевую функцию в фоновом потоке и гарантирует,
+        что колбэки on_success/on_error будут выполнены в главном потоке.
+
+        Параметры:
+        :param target: вызываемый объект (функция), который будет выполнен в
+            фоне. Может возвращать любой результат.
+        :param on_success: опциональный колбэк, вызываемый в главном потоке при
+            успешном завершении target. Получает результат target в качестве
+            аргумента.
+        :param on_error: опциональный колбэк, вызываемый в главном потоке при
+            возникновении исключения в target. Получает строку с описанием
+            ошибки.
+        :param *args: позиционные аргументы, передаваемые в target.
+        :param **kwargs: именованные аргументы, передаваемые в target.
+
+        Примечания:
+        - Исключения, возникшие в target, автоматически логируются через
+        api.log.
+        - Если on_error не указан, пользователю будет показано стандартное
+        диалоговое окно с ошибкой (через messagebox.showerror).
+        - Метод не блокирует вызывающий поток и возвращает управление
+        немедленно.
+        """
+        self._bg_manager.run(target, on_success, on_error, *args, **kwargs)
 
     # ------------------------------------------------------------------
     # Логирование
