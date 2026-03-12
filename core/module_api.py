@@ -10,6 +10,7 @@ from core.elements.background_task import BackgroundTaskManager
 from core.elements.convert_register_to_list import transform_excel_list
 from core.elements.copy_files import copy_files
 from core.elements.excel_reader import ExcelReader
+from core.elements.pdf_finder import PDFFinder
 from core.elements.working_with_folders import (
     ensure_directory_exists,
     open_file_and_folder,
@@ -76,6 +77,17 @@ class ModuleAPI:
         """Копирует файлы из нескольких источников в целевую папку."""
         return copy_files(source_dirs, target_dir, overwrite, exclude_patterns)
 
+    def download_pdfs(
+        self,
+        files: List[Path],
+        progress_callback: Optional[Callable[[int, int], None]] = None
+    ) -> Tuple[List[Path], Path]:
+        """
+        Скачивает PDF-файлы в папку 'Загрузки' с созданием подпапки по дате.
+        """
+        from core.elements.copy_files import download_pdfs
+        return download_pdfs(files, self, progress_callback)
+
     # ------------------------------------------------------------------
     # Работа с файлами Excel
     # ------------------------------------------------------------------
@@ -122,6 +134,18 @@ class ModuleAPI:
                 validator=validator,
                 default=default
             )
+
+    # ------------------------------------------------------------------
+    # Работа с файлами PDF
+    # ------------------------------------------------------------------
+    def get_pdf_finder(self) -> PDFFinder:
+        """Возвращает настроенный экземпляр PDFFinder для поиска PDF-файлов."""
+        config = self.get_config()
+        return PDFFinder(
+            root_folder=config.get("folder_ktd", ""),
+            year_labels=config.get("years", []),
+            subfolder_name=config.get("subfolder_name", "")
+        )
 
     # ------------------------------------------------------------------
     # Управление слотами и окном

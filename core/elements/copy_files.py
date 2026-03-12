@@ -1,8 +1,9 @@
 # app/core/elements/copy_files.py
 
 import shutil
+import datetime
 from pathlib import Path
-from typing import List, Tuple, Optional, Union
+from typing import List, Tuple, Optional, Union, Callable
 
 
 def copy_files(
@@ -77,3 +78,70 @@ def copy_files(
             except Exception as e:
                 results.append(f"Ошибка копирования {file.name}: {str(e)}")
     return results if results else ["Нет файлов для копирования"]
+
+
+def download_pdfs(
+    files: List[Path],
+    api,
+    progress_callback: Optional[Callable[[int, int], None]] = None
+) -> Tuple[List[Path], Path]:
+    """
+    Копирование PDF-файлов в папку "Загрузки" в подпапку с текущей датой.
+    При конфликтах имён добавляется числовой суффикс.
+
+    Args:
+    :param files: список путей к файлам для копирования
+    :param api: объект ModuleAPI для логирования
+    :param progress_callback: опциональная функция, принимающая
+        (current, total)
+
+    Returns:
+        кортеж (список скопированных файлов, путь к созданной папке)
+    """
+    current_date = datetime.datetime.now().strftime("%Y.%m.%d")
+    folder_name = f"{current_date} Скачанные PDF"
+    downloads_dir = Path.home() / "Downloads" / folder_name
+
+    counter = 1
+    original_dir = downloads_dir
+    while downloads_dir.exists():
+        downloads_dir = (
+            original_dir.parent / f"{original_dir.name} ({counter})"
+        )
+        counter += 1
+
+    downloads_dir.mkdir(parents=True)
+    api.log(f"Создана папка для скачивания: {downloads_dir}", "info")
+
+    copied = []
+    total = len(files)
+
+    for i, filepath in enumerate(files):
+        try:
+            dest = downloads_dir / filepath.name
+            # Если файл уже существует, добавляем суффикс
+            file_counter = 1
+            while dest.exists():
+                stem = filepath.stem
+                # Если имя уже содержит _цифры в конце, отрезаем их
+                parts = stem.split('_')
+                if parts[-1].isdigit():
+                    base = '_'.join(parts[:-1])
+                else:
+                    base = stem
+                dest = (
+                    downloads_dir / f"{base}_{file_counter}{filepath.suffix}"
+                )
+                file_counter += 1
+
+            shutil.copy2(filepath, dest)
+            copied.append(dest)
+            api.log(f"Скопирован: {dest}", "info")
+
+            if progress_callback:
+                progress_callback(i + 1, total)
+
+        except Exception as e:
+            api.log(f"Ошибка при копировании {filepath}: {e}", "error")
+
+    return copied, downloads_dir
