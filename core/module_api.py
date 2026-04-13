@@ -94,6 +94,24 @@ class ModuleAPI:
         """Преобразует ведомость в список оборудования."""
         transform_excel_list(input_fn, output_file)
 
+    def process_register_file(
+        self, file_path: Union[str, Path],
+        log_func: Optional[Callable[[str], None]] = None
+    ):
+        """
+        Обрабатывает файл ведомости и возвращает данные по наименованиям.
+
+        :param file_path: путь к Excel-файлу
+        :param log_func: опциональная функция для логирования (принимает
+            строку)
+        :return: результат вызова process_file (items_dict, name_col,
+            serial_col, numbering_check, additional_data)
+        """
+        from core.elements.convert_register_to_sum_sn import process_file
+        if log_func is None:
+            log_func = self.log
+        return process_file(file_path, log_func)
+
     def read_excel_mapping(
         self,
         file_path: Union[str, Path],
