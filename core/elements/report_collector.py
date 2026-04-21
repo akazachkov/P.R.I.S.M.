@@ -17,71 +17,69 @@ class ReportCollector:
         start_color="FFFF99", end_color="FFFF99", fill_type="solid"
     )
 
-    def __init__(self, config: dict):
-        """
-        :param config: словарь с ключами:
-            - folder_pnr: str - путь к папке с PNR файлами
-            - folder_pmo: str - путь к папке с PMO файлами
-            - pnr_pmo_column_names: list[str] - имена столбцов для сбора
-            - rrp_data_ГГГГ: str - ключ с годом в имени, значение — путь к
-            целевой папке
-        """
+    def __init__(self, config: dict, year: str = None, log_func=None):
+        self.log = log_func if log_func else print
         self.folder_pnr = Path(config["folder_pnr"])
         self.folder_pmo = Path(config["folder_pmo"])
         self.column_names = config["pnr_pmo_column_names"]
 
-        # Поиск ключа вида "rrp_data_ГГГГ"
-        target_key = None
-        for key in config:
-            if re.match(r"rrp_data_\d{4}$", key):
-                target_key = key
-                break
-        if not target_key:
-            raise ValueError(
-                "В конфиге не найден ключ с именем 'rrp_data_ГГГГ'"
-            )
+        if year:
+            self.year = year
+            target_key = f"rrp_data_{year}"
+            if target_key not in config:
+                raise ValueError(f"Ключ '{target_key}' не найден в конфиге")
+        else:
+            self.year = year
+            # Поиск ключа вида "rrp_data_ГГГГ"
+            target_key = None
+            for key in config:
+                if re.match(r"rrp_data_\d{4}$", key):
+                    target_key = key
+                    break
+            if not target_key:
+                raise ValueError(
+                    "В конфиге не найден ключ с именем 'rrp_data_ГГГГ'"
+                )
+            self.year = target_key.split("_")[-1]
 
-        self.year = target_key.split("_")[-1]
         self.target_dir = Path(config[target_key])
         self.target_file = self.target_dir / "Свод отчётов PMO, PNR.xlsx"
-
-        # Сбор всех строк отчёта в памяти
-        self.rows = []  # каждая строка — кортеж (список_значений,
-        # флаг_жёлтой_заливки)
+        # Сбор всех строк отчёта в памяти в кортеж
+        self.rows = []
 
     def run(self, mode: str = "append"):
         """
         Запуск сбора данных.
         :param mode: 'overwrite' - перезаписать файл
                      'append' - дополнить файл с проверкой дубликатов
+        :return: dict с ключами 'added' и 'total' (при append) или None
         """
-        print("Начинаем сбор данных...")
+        self.log("Начинаем сбор данных...")
         self._collect_files(self.folder_pnr)
         self._collect_files(self.folder_pmo)
 
         if mode == "overwrite":
             self._save_overwrite()
+            return None
         elif mode == "append":
-            self._save_append()
+            return self._save_append()
         else:
             raise ValueError("mode должен быть 'overwrite' или 'append'")
-
-        print(f"Готово. Данные сохранены в {self.target_file}")
 
     def _collect_files(self, folder: Path):
         """Обработка всех .xlsx файлов в корне указанной папки."""
         if not folder.exists():
-            print(f"Внимание: папка {folder} не существует, пропускаем.")
+            self.log(f"Внимание: папка {folder} не существует, пропускаем.")
             return
 
         for file_path in folder.glob("*.xlsx"):
             if not file_path.is_file():
                 continue
-            print(f"  Обработка файла: {file_path.name}")
+            self.log(f"  Обработка файла: {file_path.name}")
             try:
                 self._process_file(file_path)
             except Exception as e:
-                print(f"  Ошибка при обработке {file_path.name}: {e}")
+                self.log(f"  Ошибка при обработке {file_path.name}: {e}")
 
     def _process_file(self, file_path: Path):
         """Чтение одного Excel-файла и добавление его строк в self.rows."""
@@ -198,18 +196,17 @@ class ReportCollector:
             ws.column_dimensions[get_column_letter(col_idx)].width = 15
 
         wb.save(self.target_file)
-        print(f"Файл перезаписан: {self.target_file}")
+        self.log(f"Файл перезаписан: {self.target_file}")
 
     def _save_append(self):
         """
-        Дополняет существующий файл новыми данными, избегая дубликатов по
-        комбинации
-        'Дата' + 'Имя файла'.
+        Дополняет существующий файл новыми данными, избегая дубликатов.
+        Возвращает dict с ключами 'added' и 'total'.
         """
         if not self.target_file.exists():
             # Если файла нет — создаём как при перезаписи
             self._save_overwrite()
-            return
+            return {'added': 0, 'total': len(self.rows)}  # или более точное
 
         wb = load_workbook(self.target_file)
         ws = wb.active
@@ -233,22 +230,6 @@ class ReportCollector:
                 added += 1
 
         wb.save(self.target_file)
-        print(f"Новых строк: {added}. Всего строк в файле: {ws.max_row - 1}")
-
-
-# Пример использования (для теста)
-if __name__ == "__main__":
-    config = {
-        "folder_pnr": (
-            ".../!_Data/Reports PNR"
-        ),
-        "folder_pmo": (
-            ".../!_Data/Reports PMO"
-        ),
-        "pnr_pmo_column_names": [
-            ...
-        ],
-        "rrp_data_2026": ".../!_Data"
-    }
-    collector = ReportCollector(config)
-    collector.run(mode="append")
+        total = ws.max_row - 1
+        self.log(f"Новых строк: {added}. Всего строк в файле: {total}")
+        return {'added': added, 'total': total}
