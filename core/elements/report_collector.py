@@ -3,7 +3,7 @@
 import re
 from datetime import datetime
 from pathlib import Path
-
+from typing import Optional
 from openpyxl import load_workbook, Workbook
 from openpyxl.styles import PatternFill
 from openpyxl.utils import get_column_letter
@@ -22,6 +22,7 @@ class ReportCollector:
         self.folder_pnr = Path(config["folder_pnr"])
         self.folder_pmo = Path(config["folder_pmo"])
         self.column_names = config["pnr_pmo_column_names"]
+        self.rows = []
 
         if year:
             self.year = year
@@ -55,6 +56,16 @@ class ReportCollector:
         :return: dict с ключами 'added' и 'total' (при append) или None
         """
         self.log("Начинаем сбор данных...")
+        # Определяем дату последней записи в отчёте
+        if mode == "append" and self.target_file.exists():
+            self.last_date = self._get_last_report_date()
+            if self.last_date:
+                self.log(
+                    "Последняя дата в отчёте: "
+                    f"{self.last_date.strftime('%Y.%m.%d')}")
+        else:
+            self.last_date = None
+
         self._collect_files(self.folder_pnr)
         self._collect_files(self.folder_pmo)
 
@@ -75,6 +86,11 @@ class ReportCollector:
         for file_path in folder.glob("*.xlsx"):
             if not file_path.is_file():
                 continue
+            # Пропускаем файлы, которые не новее последней даты в отчёте
+            if self.last_date:
+                file_mtime = file_path.stat().st_mtime
+                if file_mtime <= self.last_date.timestamp():
+                    continue
             self.log(f"  Обработка файла: {file_path.name}")
             try:
                 self._process_file(file_path)
@@ -124,7 +140,7 @@ class ReportCollector:
                 else:
                     row_data.append(None)
 
-            self.rows.append((row_data, is_fallback))
+            self.rows.append((row_data, is_fallback, date_value))
 
         wb.close()
 
@@ -167,6 +183,32 @@ class ReportCollector:
         timestamp = file_path.stat().st_mtime
         return datetime.fromtimestamp(timestamp)
 
+    def _get_last_report_date(self) -> Optional[datetime]:
+        """
+        Возвращает дату из последней строки столбца A существующего файла
+        отчёта.
+        """
+        if not self.target_file.exists():
+            return None
+        try:
+            wb = load_workbook(
+                self.target_file, data_only=True, read_only=True
+            )
+            ws = wb.active
+            last_row = ws.max_row
+            if last_row < 2:  # только заголовок
+                wb.close()
+                return None
+            date_str = ws.cell(row=last_row, column=1).value
+            wb.close()
+            if date_str is None:
+                return None
+            # Формат даты в файле: ГГГГ.ММ.ДД
+            return datetime.strptime(str(date_str), "%Y.%m.%d")
+        except Exception as e:
+            self.log(f"Не удалось прочитать последнюю дату из отчёта: {e}")
+            return None
+
     def _save_overwrite(self):
         """
         Создаёт новый файл (или перезаписывает существующий) со всеми
@@ -183,7 +225,7 @@ class ReportCollector:
         ws.append(headers)
 
         # Данные
-        for row_data, need_yellow in self.rows:
+        for row_data, need_yellow, _ in self.rows:
             ws.append(row_data)
             if need_yellow:
                 # Закрашиваем ячейку с датой (первый столбец текущей строки)
@@ -206,7 +248,23 @@ class ReportCollector:
         if not self.target_file.exists():
             # Если файла нет — создаём как при перезаписи
             self._save_overwrite()
-            return {'added': 0, 'total': len(self.rows)}  # или более точное
+            return {'added': 0, 'total': len(self.rows)}
+
+        # Используем self.last_date, полученное в run
+        if self.last_date:
+            filtered_rows = []
+            for row_data, need_yellow, date_value in self.rows:
+                if date_value > self.last_date:
+                    filtered_rows.append((row_data, need_yellow))
+            self.log(
+                "Отфильтровано строк: "
+                f"{len(self.rows) - len(filtered_rows)} из {len(self.rows)}"
+            )
+        else:
+            filtered_rows = [
+                (row_data, need_yellow) for row_data,
+                need_yellow, _ in self.rows
+            ]
 
         wb = load_workbook(self.target_file)
         ws = wb.active
@@ -219,7 +277,7 @@ class ReportCollector:
 
         # Добавляем только новые строки
         added = 0
-        for row_data, need_yellow in self.rows:
+        for row_data, need_yellow in filtered_rows:
             pair = (row_data[0], row_data[1])
             if pair not in existing_pairs:
                 ws.append(row_data)
