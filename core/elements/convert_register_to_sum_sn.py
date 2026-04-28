@@ -539,9 +539,16 @@ def create_combined_verification_file(
         ws.cell(row=row_num, column=1, value=i)
         ws.cell(row=row_num, column=2, value=left_name)
         ws.cell(row=row_num, column=3, value=left_serial)
-        # RMA данные
+
+        # RMA левый (столбец D)
         if rma_dict and left_serial:
-            ws.cell(row=row_num, column=4, value=rma_dict.get(left_serial, ""))
+            rma_entry = rma_dict.get(left_serial)
+            if rma_entry:
+                val, headers = rma_entry
+                cell_text = f"{val} ({headers})" if headers else val
+                ws.cell(row=row_num, column=4, value=cell_text)
+            else:
+                ws.cell(row=row_num, column=4, value="")
         # Статус загрузки (если есть файл)
         if uploading_file_path and left_serial:
             # Проверяем наличие серийного номера (с логированием)
@@ -574,11 +581,16 @@ def create_combined_verification_file(
             ws.cell(row=row_num, column=7, value=i)
             ws.cell(row=row_num, column=8, value=right_name)
             ws.cell(row=row_num, column=9, value=right_serial)
+
+            # RMA правый (столбец J)
             if rma_dict and right_serial:
-                ws.cell(
-                    row=row_num, column=10,
-                    value=rma_dict.get(right_serial, "")
-                )
+                rma_entry = rma_dict.get(right_serial)
+                if rma_entry:
+                    val, headers = rma_entry
+                    cell_text = f"{val} ({headers})" if headers else val
+                    ws.cell(row=row_num, column=10, value=cell_text)
+                else:
+                    ws.cell(row=row_num, column=10, value="")
 
     # Выделение несовпадений (индексы скорректированы)
     if right_rows:
@@ -624,8 +636,9 @@ def load_rma_data_for_id(
     """
     Загружает данные из файла RMA (rma_tab) только для строк,
     где ID в столбце A соответствует normalized_id.
-    Возвращает словарь: {серийный_номер: значение_из_столбца_I}
-    Серийные номера ищутся в столбцах K и L, начиная с 4 строки.
+    Возвращает словарь:
+        {серийный_номер: (значение_из_I, 'заголовок_K / заголовок_L')}
+    Заголовки столбцов читаются из строки 3 (столбцы 11 и 12).
     """
     if log_func is None:
         def log_func(msg, level='info'):
@@ -645,45 +658,55 @@ def load_rma_data_for_id(
             return {}
         ws = wb[rma_sheet]
 
-        rma_dict = {}
+        # Читаем заголовки из строки 3 для столбцов K(11) и L(12)
+        header_k = format_cell_value(ws.cell(row=3, column=11).value) or "K"
+        header_l = format_cell_value(ws.cell(row=3, column=12).value) or "L"
+        log_func(f"Заголовки RMA: K='{header_k}', L='{header_l}'", "debug")
+
+        # Промежуточный словарь:
+        # serial -> [значение_I, список_уникальных_заголовков]
+        raw_dict = {}
         start_row = 4
         max_row = ws.max_row
 
         for row_idx in range(start_row, max_row + 1):
-            # Столбец A (1) – ID
             cell_id = ws.cell(row=row_idx, column=1).value
             if cell_id is None:
                 continue
-            # Нормализуем ID из ячейки
             id_str = str(cell_id).strip()
-            # Извлекаем цифры и дополняем до 4
             digits = re.sub(r'\D', '', id_str)
             if not digits:
                 continue
             cell_norm = digits.zfill(4)
-            # Если ID не совпадает – пропускаем строку
             if cell_norm != normalized_id:
                 continue
 
-            # Столбец I (9) – значение для копирования
             value_i = ws.cell(row=row_idx, column=9).value
             if value_i is None:
                 continue
-
-            # Серийные номера в столбцах K (11) и L (12)
-            serial_k = ws.cell(row=row_idx, column=11).value
-            serial_l = ws.cell(row=row_idx, column=12).value
-
-            serial_k_str = format_cell_value(serial_k)
-            serial_l_str = format_cell_value(serial_l)
             val_str = format_cell_value(value_i)
 
+            serial_k = ws.cell(row=row_idx, column=11).value
+            serial_l = ws.cell(row=row_idx, column=12).value
+            serial_k_str = format_cell_value(serial_k)
+            serial_l_str = format_cell_value(serial_l)
+
             if serial_k_str:
-                rma_dict[serial_k_str] = val_str
+                entry = raw_dict.setdefault(serial_k_str, [val_str, []])
+                if header_k not in entry[1]:
+                    entry[1].append(header_k)
             if serial_l_str:
-                rma_dict[serial_l_str] = val_str
+                entry = raw_dict.setdefault(serial_l_str, [val_str, []])
+                if header_l not in entry[1]:
+                    entry[1].append(header_l)
 
         wb.close()
+
+        # Преобразуем в финальный вид: {serial: (value, 'h1 / h2')}
+        rma_dict = {
+            k: (v[0], " / ".join(v[1]))
+            for k, v in raw_dict.items()
+        }
         log_func(
             f"Загружено {len(rma_dict)} записей из RMA для ID {normalized_id}",
             "info"
