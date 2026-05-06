@@ -1,7 +1,6 @@
-# app/config/app_config.py
+"""app/config/app_config.py"""
 
 from pathlib import Path
-
 
 # Определяем корневую директорию проекта и путь к папке с модулями
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -11,7 +10,7 @@ MODULES_DIR = PROJECT_ROOT / "modules"
 CONFIG_PATHS_NAME = PROJECT_ROOT / "config" / "config_paths_name.toml"
 
 # Название приложения, логотип в строке заголовка
-APP_TITLE = "P.R.I.S.M. v.1.2.6"
+APP_TITLE = "P.R.I.S.M. v.1.3.0"
 APP_LOGO = PROJECT_ROOT / "gui" / "images" / "logo_small.png"
 
 # Геометрия приложения

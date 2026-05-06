@@ -747,7 +747,7 @@ def check_serial_in_uploading_file(
 ) -> bool:
     """
     Проверяет, встречается ли серийный номер в столбцах D, E, F, G (4-7)
-    в первых 1000 строках файла uploading_file.
+    в первых 2000 строках файла uploading_file.
     Возвращает True, если найден хотя бы раз.
     """
     if not uploading_file or not uploading_file.exists():
@@ -761,9 +761,9 @@ def check_serial_in_uploading_file(
         wb = safe_load_workbook(uploading_file, data_only=True, read_only=True)
         ws = wb.active
         found = False
-        # Проверяем строки 1..1000, столбцы 4..7 (D,E,F,G)
+        # Проверяем строки 1..2000, столбцы 4..7 (D,E,F,G)
         for row_idx, row in enumerate(ws.iter_rows(
-            min_row=1, max_row=1000, min_col=4, max_col=7, values_only=True
+            min_row=1, max_row=2000, min_col=4, max_col=7, values_only=True
         ), start=1):
             for cell_value in row:
                 if cell_value is not None:
