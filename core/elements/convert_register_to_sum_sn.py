@@ -746,9 +746,11 @@ def check_serial_in_uploading_file(
     uploading_file: Path, serial: str, log_func=None
 ) -> bool:
     """
-    Проверяет, встречается ли серийный номер в столбцах D, E, F, G (4-7)
-    в первых 2000 строках файла uploading_file.
-    Возвращает True, если найден хотя бы раз.
+    Проверяет, встречается ли серийный номер в столбцах D,E,F,G (4-7)
+    файла uploading_file.
+    Поиск прекращается после трёх подряд идущих строк, в которых
+    столбец A (1) пуст.
+    Возвращает True, если серийный номер найден хотя бы один раз.
     """
     if not uploading_file or not uploading_file.exists():
         if log_func:
@@ -761,11 +763,22 @@ def check_serial_in_uploading_file(
         wb = safe_load_workbook(uploading_file, data_only=True, read_only=True)
         ws = wb.active
         found = False
-        # Проверяем строки 1..2000, столбцы 4..7 (D,E,F,G)
-        for row_idx, row in enumerate(ws.iter_rows(
-            min_row=1, max_row=2000, min_col=4, max_col=7, values_only=True
-        ), start=1):
-            for cell_value in row:
+        empty_streak = 0
+
+        # Читаем строки, получаем значения столбцов A–G
+        for row in ws.iter_rows(min_row=1, max_col=7, values_only=True):
+            # Проверка столбца A (индекс 0)
+            cell_a = row[0] if len(row) > 0 else None
+            if cell_a is None or str(cell_a).strip() == '':
+                empty_streak += 1
+                if empty_streak >= 3:
+                    break           # достигнут конец данных
+                continue            # эту строку пропускаем (пустая)
+            else:
+                empty_streak = 0    # сброс, т.к. столбец A непуст
+
+            # Поиск серийного номера в столбцах D–G (индексы 3,4,5,6)
+            for cell_value in row[3:7]:
                 if cell_value is not None:
                     cell_str = format_cell_value(cell_value)
                     if serial == cell_str:
@@ -773,6 +786,7 @@ def check_serial_in_uploading_file(
                         break
             if found:
                 break
+
         wb.close()
         if log_func and found:
             log_func(
