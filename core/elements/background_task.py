@@ -1,9 +1,10 @@
-# app/core/elements/background_task.py
+"""app/core/elements/background_task.py"""
 
 import threading
 import traceback
+from collections.abc import Callable
 from tkinter import messagebox
-from typing import Callable, Optional, Any
+from typing import Any
 
 
 class BackgroundTaskManager:
@@ -22,8 +23,8 @@ class BackgroundTaskManager:
     def run(
         self,
         target: Callable,
-        on_success: Optional[Callable[[Any], None]] = None,
-        on_error: Optional[Callable[[str], None]] = None,
+        on_success: Callable[[Any], None] | None = None,
+        on_error: Callable[[str], None] | None = None,
         *args,
         **kwargs
     ) -> None:
@@ -44,7 +45,7 @@ class BackgroundTaskManager:
                 result = target(*args, **kwargs)
                 if on_success:
                     self._api.schedule_gui_task(on_success, result)
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 # Формируем подробное сообщение об ошибке
                 error_msg = (
                     f"{type(e).__name__}: {e}\n{traceback.format_exc()}"
