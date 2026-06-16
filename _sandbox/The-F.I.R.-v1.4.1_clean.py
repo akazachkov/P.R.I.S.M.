@@ -2,16 +2,17 @@ import os
 import re
 import shutil
 import tkinter as tk
-import openpyxl
 import warnings  # Подавление предупреждений, при работе с файлами .xlsb
-from pyxlsb import open_workbook
 from datetime import datetime
-from openpyxl.styles import Border, Side, PatternFill, Font, Alignment
-from openpyxl.utils import get_column_letter, range_boundaries
-from openpyxl import load_workbook, Workbook
-from tkinter import messagebox, filedialog
-from pathlib import Path
 from glob import glob  # Для пакетной обработки папок УС
+from pathlib import Path
+from tkinter import filedialog, messagebox
+
+import openpyxl
+from openpyxl import Workbook, load_workbook
+from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
+from openpyxl.utils import get_column_letter, range_boundaries
+from pyxlsb import open_workbook
 
 """
 The F.I.R. (File Interaction Runner) v1.4.0 (16.06.2025)
@@ -44,7 +45,7 @@ def copy_file_1_button(content_fwt_rrp, content_fwt_2025):
 
     # Если файлов нет - выводим сообщение и завершаем функцию
     if not files:
-        print('Файлов не обнаружено')
+        print('Файлов не обнаружено')  # noqa: T201
         return
 
     # Проверка наличия лог-файла и создание, если его нет
@@ -136,7 +137,7 @@ def copy_file_1_button(content_fwt_rrp, content_fwt_2025):
 
         # Добавляем запись в лог-файл о завершении перемещения
         log_wb.active.append([
-            datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            datetime.now().strftime('%Y-%m-%d %H:%M:%S'),  # noqa: DTZ005
             'Обработан и перемещен\n',
             file_name,
             destination,
@@ -189,7 +190,7 @@ def open_file_file_2():
         # Открываем директорию назначения (возможно открытие файла)
         open_file_and_folder(output_filename_1)
     else:
-        print('Файл не выбран')
+        print('Файл не выбран')  # noqa: T201
 
 
 # Функция для кнопки 4 - поиск и копирование 1 (при отсутствии - 2)
@@ -684,7 +685,7 @@ def process_file(file_to_copy, search_folder, current_id, subfolder,
             ])
 
             return True
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             log_wb.active.append([
                 datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
                 f'Ошибка перемещения: {str(e)}',
@@ -740,7 +741,7 @@ def process_file(file_to_copy, search_folder, current_id, subfolder,
             os.path.basename(os.path.dirname(dest_file))
         ])
         return True
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         log_wb.active.append([
             datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
             f'Ошибка копирования: {str(e)}',
@@ -783,7 +784,7 @@ def check_and_open_log(log_file_path):
         try:
             # Открываем файл в зависимости от операционной системы
             if os.name == 'nt':  # Для Windows
-                os.startfile(log_file_path)
+                os.startfile(log_file_path)  # noqa: S606
             # elif os.name == 'posix':  # Для macOS и Linux
             #     subprocess.run(['open', log_file_path] if
             #       sys.platform == 'darwin' else ['xdg-open', log_file_path])
@@ -1111,7 +1112,7 @@ def transform_excel_removal_equipment(input_fn, output_file, content_fwt_rrp):
 
                 output_file = Path(output_file)
                 output_file = (
-                    output_file.parent/"Для customer"/output_file.name)
+                    output_file.parent / "Для customer" / output_file.name)
         else:
             # Преобразуем число в строку и дополняем нулями до 4 символов
             number_str = str(number).zfill(4) if number is not None else "0000"

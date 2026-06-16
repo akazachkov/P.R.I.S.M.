@@ -1,4 +1,7 @@
 Лог изменений.
+16.06.2026 - v. 1.3.0
+1. Рефакторинг кода - app_controller.py и файлы в _sandbox
+
 15.05.2026 - v. 1.3.0
 1. Рефакторинг кода - config_paths_name.toml и background_task.py
 

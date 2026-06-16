@@ -1,5 +1,6 @@
 import os
 import re
+
 from openpyxl import Workbook
 
 
@@ -26,7 +27,7 @@ def main():
     folder = ("путь к папке").strip()  # УКАЗАТЬ ПУТЬ
 
     if not os.path.isdir(folder):
-        print("Ошибка: указанная папка не существует.")
+        print("Ошибка: указанная папка не существует.")  # noqa: T201
         return
 
     files = []
@@ -36,7 +37,7 @@ def main():
             files.append(entry)
 
     if not files:
-        print("В папке нет файлов.")
+        print("В папке нет файлов.")  # noqa: T201
         return
 
     # Подготовка данных: каждая строка = [имя_файла, число_или_пусто]
@@ -59,9 +60,9 @@ def main():
     output_path = os.path.join(folder, "_свод.xlsx")
     try:
         wb.save(output_path)
-        print(f"Файл успешно создан: {output_path}")
-    except Exception as e:
-        print(f"Ошибка при сохранении файла: {e}")
+        print(f"Файл успешно создан: {output_path}")  # noqa: T201
+    except Exception as e:  # noqa: BLE001
+        print(f"Ошибка при сохранении файла: {e}")  # noqa: T201
 
 
 if __name__ == "__main__":

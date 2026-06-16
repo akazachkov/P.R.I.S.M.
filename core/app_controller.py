@@ -1,23 +1,23 @@
-# app/core/app_controller.py
+"""app/core/app_controller.py"""
 
-import tomllib
-import tkinter as tk
-import threading
 import queue
+import threading
+import tkinter as tk
+import tomllib
 from pathlib import Path
-from tkinter import ttk, messagebox
-from typing import Dict, Type, List
+from tkinter import messagebox, ttk
 
-from .module_loader import import_modules, BaseModule
-from .module_api import ModuleAPI
-from config.app_config import APP_TITLE, MODULES_DIR, MAX_CONCURRENT_MODULES
+from config.app_config import APP_TITLE, MAX_CONCURRENT_MODULES, MODULES_DIR
 from gui.main_module import MainModuleUI
+
+from .module_api import ModuleAPI
+from .module_loader import BaseModule, import_modules
 
 
 class AppController:
     def __init__(self, config_path: Path):
         self.app_title = APP_TITLE
-        self.loaded_modules: Dict[str, Type[BaseModule]] = {}
+        self.loaded_modules: dict[str, type[BaseModule]] = {}
 
         # --- Загрузка конфигурации ---
         self.config_path = config_path
@@ -29,13 +29,13 @@ class AppController:
         # 2. Очередь для передачи команд в GUI-поток
         self.command_queue: queue.Queue = queue.Queue()
         # 3. Список для хранения всех активных фреймов модулей
-        self.pinned_module_frames: List[ttk.Frame] = []
+        self.pinned_module_frames: list[ttk.Frame] = []
         # 4. Ссылка на класс, отвечающий за UI
         self.ui_handler: MainModuleUI | None = None
         self.main_window: tk.Tk | None = None
         self.api: ModuleAPI | None = None
         self.notebook = None
-        self.opened_tabs: List[ttk.Frame] = []
+        self.opened_tabs: list[ttk.Frame] = []
 
     def _load_config(self):
         """Загружает конфигурацию из TOML-файла."""
@@ -59,8 +59,8 @@ class AppController:
                     func, *args = item
                     try:
                         func(*args)
-                    except Exception as e:
-                        print(f"Ошибка в UI-команде: {e}")
+                    except Exception as e:  # noqa: BLE001
+                        print(f"Ошибка в UI-команде: {e}")  # noqa: T201
                     self.command_queue.task_done()
             except queue.Empty:
                 pass
@@ -82,7 +82,7 @@ class AppController:
         order_index = {name: i for i, name in enumerate(module_order)}
 
         def sort_key(item):
-            name, cls = item
+            name, _ = item
             # Модули, не попавшие в список, отправляются в конец
             idx = order_index.get(name, len(module_order))
             return (idx, name)   # дополнительно сортируем по имени
@@ -98,7 +98,7 @@ class AppController:
         """Сохраняет ссылку на главный Notebook."""
         self.notebook = notebook
 
-    def _handle_module_click(self, module_class: Type[BaseModule]):
+    def _handle_module_click(self, module_class: type[BaseModule]):
         """Обработчик нажатия кнопки модуля."""
         def _try_open():
             acquired = self.module_semaphore.acquire(blocking=False)
@@ -119,7 +119,7 @@ class AppController:
 
         threading.Thread(target=_try_open, daemon=True).start()
 
-    def _open_module_tab(self, module_class: Type[BaseModule]):
+    def _open_module_tab(self, module_class: type[BaseModule]):
         """Создаёт новую вкладку для модуля (выполняется в GUI-потоке)."""
         if not self.notebook:
             self.module_semaphore.release()
@@ -159,7 +159,7 @@ class AppController:
 
         try:
             module_class.initialize_frame(body_frame, api=self.api)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             error_msg = str(e)
             # При ошибке удаляем вкладку, освобождаем слот и показываем
             # сообщение
@@ -179,7 +179,7 @@ class AppController:
         # Переключаемся на новую вкладку
         self.notebook.select(tab_frame)
 
-    def _open_module_ui(self, module_class: Type[BaseModule]):
+    def _open_module_ui(self, module_class: type[BaseModule]):
         """
         Создаёт фрейм модуля и запускает его инициализацию (выполняется в
         GUI-потоке).
@@ -189,14 +189,14 @@ class AppController:
             return
 
         # Создаём контейнер для модуля
-        container, body_frame, header_frame = (
+        container, body_frame, _ = (
             self.ui_handler.create_module_frame(module_class)
         )
 
         try:
             # Передаём API в модуль
             module_class.initialize_frame(body_frame, api=self.api)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             # При ошибке показываем сообщение и удаляем фрейм
             tk.Label(
                 body_frame,
@@ -241,4 +241,4 @@ class AppController:
     def on_app_close(self):
         """Вызывается при закрытии приложения."""
         self.command_queue.put((None,))
-        print("Приложение закрывается.")
+        print("Приложение закрывается.")  # noqa: T201

@@ -1,20 +1,20 @@
+import platform
 import re
 import shutil
-import tkinter as tk
-import openpyxl
-import warnings  # Подавление предупреждающих сообщений, при работе с .xlsb
-import platform
-import subprocess  # nosec B404
-from pyxlsb import open_workbook
-from datetime import datetime
-from openpyxl.styles import Border, Side, PatternFill, Font, Alignment
-from openpyxl.utils import get_column_letter, range_boundaries
-from openpyxl import load_workbook, Workbook
-from tkinter import messagebox, filedialog
-from pathlib import Path
-from glob import glob
+import subprocess  # noqa: S404
 import sys  # Принудительное отображение в терминале, кодировки utf-8
+import tkinter as tk
+import warnings  # Подавление предупреждающих сообщений, при работе с .xlsb
+from datetime import datetime
+from glob import glob
+from pathlib import Path
+from tkinter import filedialog, messagebox
 
+import openpyxl
+from openpyxl import Workbook, load_workbook
+from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
+from openpyxl.utils import get_column_letter, range_boundaries
+from pyxlsb import open_workbook
 
 # Подавление ошибки, связанной с ограниченной поддержкой библиотеки openpyxl,
 # функций проверки данных в Excel
@@ -208,7 +208,7 @@ def copy_1_button(
 
     # Если файлов нет - выводим сообщение и завершаем функцию
     if not files:
-        print('Файлов не обнаружено')
+        print('Файлов не обнаружено')  # noqa: T201
         return
 
     # Проверка наличия лог-файла и его создание, если не существует
@@ -357,7 +357,7 @@ def open_file_2():
         # Открываем директорию назначения
         open_file_and_folder(output_filename_1)
     else:
-        print('Файл не выбран')
+        print('Файл не выбран')  # noqa: T201
 
 
 # Функция для кнопки 4 - поиск и копирование 1, при отсутствии 1 - 2
@@ -733,7 +733,7 @@ def process_file(
                 org_dir])
 
             return True
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             log_wb.active.append([
                 datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
                 f'Ошибка перемещения: {str(e)}',
@@ -788,7 +788,7 @@ def process_file(
             subfolder.split(' ')[1],
             dest_file.parent.name])
         return True
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         log_wb.active.append([
             datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
             f'Ошибка копирования: {str(e)}',
@@ -835,11 +835,11 @@ def check_and_open_log(log_file_path):
         system = platform.system()
 
         if system == 'Windows':
-            subprocess.run(['explorer', log_file_path])  # nosec B603, B607
+            subprocess.run(['explorer', log_file_path])  # noqa: S603, S607
         elif system == 'Darwin':  # macOS
-            subprocess.run(['open', log_file_path])  # nosec B603, B607
+            subprocess.run(['open', log_file_path])  # noqa: S603, S607
         else:  # Linux и другие системы
-            subprocess.run(['xdg-open', log_file_path])  # nosec B603, B607
+            subprocess.run(['xdg-open', log_file_path])  # noqa: S603, S607
     else:
         messagebox.showwarning(
             'Предупреждение', f'Лог-файл не найден по пути: {log_file_path}')
@@ -859,15 +859,15 @@ def open_file_and_folder(output_filename):
 
     if system == 'Windows':
         # Открываем папку с выделенным файлом в проводнике
-        subprocess.run(['explorer', '/select,', str(path)])  # nosec B603, B607
+        subprocess.run(['explorer', '/select,', str(path)])  # noqa: S603, S607
     elif system == 'Darwin':  # macOS
         # Показываем файл в Finder
-        subprocess.run(['open', '-R', str(path)])  # nosec B603, B607
+        subprocess.run(['open', '-R', str(path)])  # noqa: S603, S607
     else:  # Linux и другие системы
         # Показываем папку в файловом менеджере
-        subprocess.run(['xdg-open', str(parent_dir)])  # nosec B603, B607
+        subprocess.run(['xdg-open', str(parent_dir)])  # noqa: S603, S607
         # Открываем файл в ассоциированной программе
-        subprocess.run(['xdg-open', str(path)])  # nosec B603, B607
+        subprocess.run(['xdg-open', str(path)])  # noqa: S603, S607
 
 
 # Функция для конвертации файла 2 в список
