@@ -3,7 +3,6 @@
 import importlib.util
 import inspect
 from pathlib import Path
-from typing import Dict, Type
 
 
 # Определяем BaseModule здесь, чтобы избежать циклических импортов и чтобы все
@@ -31,7 +30,7 @@ class BaseModule:
         raise NotImplementedError("Модуль должен реализовать initialize_frame")
 
 
-def import_modules(modules_dir: Path) -> Dict[str, Type[BaseModule]]:
+def import_modules(modules_dir: Path) -> dict[str, type[BaseModule]]:
     """
     Сканирует папку с модулями и импортирует все Python-файлы.
     Возвращает словарь {имя_модуля: класс_модуля}.
@@ -51,7 +50,7 @@ def import_modules(modules_dir: Path) -> Dict[str, Type[BaseModule]]:
             spec.loader.exec_module(module)
 
             # Ищем класс, наследующийся от BaseModule
-            for name, obj in inspect.getmembers(module, inspect.isclass):
+            for _, obj in inspect.getmembers(module, inspect.isclass):
                 # isinstance не работает с базовыми классами из importlib,
                 # поэтому используем `issubclass`, но осторожно
                 if issubclass(obj, BaseModule) and obj is not BaseModule:
@@ -72,10 +71,10 @@ def import_modules(modules_dir: Path) -> Dict[str, Type[BaseModule]]:
                         module_class.is_tab = False  # Модуль-фрейм
 
                     loaded_modules[file_path.stem] = module_class
-                    print(
+                    print(  # noqa: T201
                         f"Загружен модуль: {file_path.stem} (тип: "
                         f"{'вкладка' if module_class.is_tab else 'фрейм'})"
                     )
-        except Exception as e:
-            print(f"Ошибка загрузки модуля {file_path}: {e}")
+        except Exception as e:  # noqa: BLE001
+            print(f"Ошибка загрузки модуля {file_path}: {e}")  # noqa: T201
     return loaded_modules

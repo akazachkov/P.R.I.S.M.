@@ -3,11 +3,13 @@
 import tkinter as tk
 from tkinter import ttk
 
-from gui.elements.logo_manager import setup_window_logo
-from core.app_controller import AppController
 from config.app_config import (
-    GEOMETRY_MAIN_WINDOW, MAIN_WINDOW_MAXSIZE, MAX_CONCURRENT_MODULES
+    GEOMETRY_MAIN_WINDOW,
+    MAIN_WINDOW_MAXSIZE,
+    MAX_CONCURRENT_MODULES,
 )
+from core.app_controller import AppController
+from gui.elements.logo_manager import setup_window_logo
 
 
 class MainWindow(tk.Tk):
@@ -67,7 +69,7 @@ class MainWindow(tk.Tk):
         self.notebook = ttk.Notebook(self)
         self.notebook.pack(fill='both', expand=True, padx=5, pady=5)
 
-        # Вкладка: "Подключаемые модули"
+        # Вкладка "Подключаемые модули"
         self.modules_tab = ttk.Frame(self.notebook)
         self.notebook.add(self.modules_tab, text="Подключаемые модули")
 
@@ -119,8 +121,7 @@ class MainWindow(tk.Tk):
         # 2. Получаем `scrollregion` из Canvas
         try:
             # Получаем ограничивающую рамку (bounding box) для всех элементов
-            # на Canvas. bbox("all") возвращает кортеж из 4 чисел:
-            # (x1, y1, x2, y2)
+            # на Canvas. bbox("all") возвращает кортеж из (x1, y1, x2, y2)
             # [0] x1, [1] y1 - координаты верхнего левого угла
             # [2] x2, [3] y2 - координаты нижнего правого угла
             scrollregion_bbox = self.controller.ui_handler.canvas.bbox("all")

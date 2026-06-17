@@ -2,10 +2,9 @@
 
 import tkinter as tk
 from tkinter import ttk
-from typing import Type
 
-from core.module_loader import BaseModule
 from config.app_config import GEOMETRY_MAIN_WINDOW, WRAPLENGHT_BUTTON
+from core.module_loader import BaseModule
 
 
 class MainModuleUI:
@@ -88,7 +87,7 @@ class MainModuleUI:
     def create_module_button(
             self,
             module_name: str,
-            module_class: Type[BaseModule],
+            module_class: type[BaseModule],
             on_click_handler
     ):
         """Создаёт кнопку модуля на левой панели."""
@@ -116,7 +115,7 @@ class MainModuleUI:
         )
         button.pack(pady=5)
 
-    def create_module_frame(self, module_class: Type[BaseModule]):
+    def create_module_frame(self, module_class: type[BaseModule]):
         """
         Создаёт фрейм для нового модуля.
         Возвращает кортеж (container, body_frame, header_frame).

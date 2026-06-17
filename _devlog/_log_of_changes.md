@@ -1,4 +1,7 @@
 Лог изменений.
+17.06.2026 - v. 1.3.0
+1. Рефакторинг кода - module_loader.py, main_module.py, main_window.py
+
 16.06.2026 - v. 1.3.0
 1. Рефакторинг кода - app_controller.py и файлы в _sandbox
 
