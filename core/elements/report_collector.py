@@ -1,10 +1,11 @@
-# /core/elements/report_collector.py
+"""app/core/elements/report_collector.py"""
 
 import re
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
-from openpyxl import load_workbook, Workbook
+
+from openpyxl import Workbook, load_workbook
 from openpyxl.styles import PatternFill
 from openpyxl.utils import get_column_letter
 
@@ -94,7 +95,7 @@ class ReportCollector:
             self.log(f"  Обработка файла: {file_path.name}")
             try:
                 self._process_file(file_path)
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 self.log(f"  Ошибка при обработке {file_path.name}: {e}")
 
     def _process_file(self, file_path: Path):
@@ -104,10 +105,9 @@ class ReportCollector:
 
         # Определяем дату для файла
         date_value, is_fallback = self._extract_date(file_path)
-        # Формат: ГГГГ.ММ.ДД
         date_str = (
             f"{date_value.year}.{date_value.month:02d}.{date_value.day:02d}"
-        )
+        )  # Формат: ГГГГ.ММ.ДД
 
         # Считываем заголовки (первая строка)
         headers = []
@@ -205,7 +205,7 @@ class ReportCollector:
                 return None
             # Формат даты в файле: ГГГГ.ММ.ДД
             return datetime.strptime(str(date_str), "%Y.%m.%d")
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             self.log(f"Не удалось прочитать последнюю дату из отчёта: {e}")
             return None
 

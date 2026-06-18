@@ -1,8 +1,9 @@
-# app/core/elements/convert_register_to_list.py
+"""app/core/elements/convert_register_to_list.py"""
 
 import re
-from openpyxl import load_workbook, Workbook
-from openpyxl.styles import Border, Font, Alignment
+
+from openpyxl import Workbook, load_workbook
+from openpyxl.styles import Alignment, Border, Font
 from openpyxl.utils import get_column_letter
 
 

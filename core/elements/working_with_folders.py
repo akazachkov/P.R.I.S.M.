@@ -1,7 +1,7 @@
-# app/core/elements/working_with_folders.py
+"""app/core/elements/working_with_folders.py"""
 
-import subprocess
 import re
+import subprocess
 from pathlib import Path
 from tkinter import messagebox
 
@@ -49,7 +49,7 @@ def open_file_and_folder(path: str | Path) -> bool:
             "Ошибка", f"Не удалось запустить 'explorer'. Ошибка: {e}"
         )
         return False
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         messagebox.showerror("Ошибка", f"Ошибка: {e}")
         return False
 
@@ -82,6 +82,6 @@ def parse_file_path(file_path: str | Path):
             abbrev_match = re.search(r'(ВСО|ВДО)', filename)
         abbrev = abbrev_match.group(1) if abbrev_match else None
         return base_dir, number, abbrev
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         messagebox.showerror("Ошибка", f"Ошибка при парсинге пути: {e}")
         return None, None, None

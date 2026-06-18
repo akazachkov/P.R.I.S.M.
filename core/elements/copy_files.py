@@ -1,17 +1,17 @@
-# app/core/elements/copy_files.py
+"""app/core/elements/copy_files.py"""
 
-import shutil
 import datetime
+import shutil
 from pathlib import Path
-from typing import List, Tuple, Optional, Union, Callable
+from typing import Callable, Optional, Union
 
 
 def copy_files(
-    source_dirs: List[Tuple[Union[str, Path], Optional[List[str]]]],
+    source_dirs: list[tuple[Union[str, Path], Optional[list[str]]]],
     target_dir: Union[str, Path],
     overwrite: bool = True,
-    exclude_patterns: Optional[List[str]] = None
-) -> List[str]:
+    exclude_patterns: Optional[list[str]] = None
+) -> list[str]:
     """
     Универсальная функция для копирования файлов из нескольких директорий.
 
@@ -75,16 +75,16 @@ def copy_files(
                 results.append(
                     f"Из {source_path.name} - {file.name}"
                 )
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 results.append(f"Ошибка копирования {file.name}: {str(e)}")
     return results if results else ["Нет файлов для копирования"]
 
 
 def download_pdfs(
-    files: List[Path],
+    files: list[Path],
     api,
     progress_callback: Optional[Callable[[int, int], None]] = None
-) -> Tuple[List[Path], Path]:
+) -> tuple[list[Path], Path]:
     """
     Копирование PDF-файлов в папку "Загрузки" в подпапку с текущей датой.
     При конфликтах имён добавляется числовой суффикс.
@@ -141,7 +141,7 @@ def download_pdfs(
             if progress_callback:
                 progress_callback(i + 1, total)
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             api.log(f"Ошибка при копировании {filepath}: {e}", "error")
 
     return copied, downloads_dir

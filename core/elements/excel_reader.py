@@ -1,8 +1,8 @@
-# app/core/elements/excel_reader.py
+"""app/core/elements/excel_reader.py"""
 
 import logging
 from pathlib import Path
-from typing import Union, List, Dict, Any, Optional, Callable
+from typing import Any, Callable, Optional, Union
 
 from openpyxl import load_workbook
 from pyxlsb import open_workbook as open_xlsb
@@ -54,7 +54,7 @@ class ExcelReader:
         self._workbook = None
         self._sheet = None
 
-    def get_sheet_names(self) -> List[str]:
+    def get_sheet_names(self) -> list[str]:
         if self._is_xlsb:
             return self._workbook.sheets
         else:
@@ -95,7 +95,7 @@ class ExcelReader:
         start_row: int = 2,
         validator: Optional[Callable[[Any], bool]] = None,
         default: Any = None
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Строит словарь из двух столбцов.
 

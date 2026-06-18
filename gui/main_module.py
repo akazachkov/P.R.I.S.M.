@@ -1,4 +1,4 @@
-# app/gui/main_module.py
+"""app/gui/main_module.py"""
 
 import tkinter as tk
 from tkinter import ttk

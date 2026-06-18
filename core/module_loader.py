@@ -1,4 +1,4 @@
-# app/core/module_loader.py
+"""app/core/module_loader.py"""
 
 import importlib.util
 import inspect

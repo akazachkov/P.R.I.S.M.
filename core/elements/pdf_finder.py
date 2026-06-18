@@ -1,15 +1,15 @@
-# app/core/elements/pdf_finder.py
+"""app/core/elements/pdf_finder.py"""
 
-from pathlib import Path
-import re
 import datetime
+import re
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from typing import List, Dict, Optional, Tuple
+from pathlib import Path
+from typing import Optional
 
 
 class PDFFinder:
     def __init__(
-        self, root_folder: str, year_labels: List[str],
+        self, root_folder: str, year_labels: list[str],
         subfolder_name: str
     ):
         self.root_folder = Path(root_folder)
@@ -22,7 +22,7 @@ class PDFFinder:
             mtime = filepath.stat().st_mtime
             dt = datetime.datetime.fromtimestamp(mtime)
             return dt.strftime("%d.%m.%Y %H:%M")
-        except Exception:
+        except Exception:  # noqa: BLE001
             return "дата неизв."
 
     def normalize_number(self, number_str: str) -> str:
@@ -49,7 +49,7 @@ class PDFFinder:
 
     def find_for_number(
         self, raw_number: str
-    ) -> Dict[str, List[Tuple[Path, str]]]:
+    ) -> dict[str, list[tuple[Path, str]]]:
         padded = self.normalize_number(raw_number)
 
         def search_in_year(label):
@@ -88,8 +88,8 @@ class PDFFinder:
             return result
 
     def find_for_numbers(
-        self, numbers: List[str], target_year: Optional[str] = None
-    ) -> Tuple[Dict[str, Dict[str, List[Tuple[Path, str]]]], List[str]]:
+        self, numbers: list[str], target_year: Optional[str] = None
+    ) -> tuple[dict[str, dict[str, list[tuple[Path, str]]]], list[str]]:
         normalized_numbers = [self.normalize_number(num) for num in numbers]
         years_to_search = [target_year] if target_year else self.year_labels
         result_by_number = {norm: {} for norm in normalized_numbers}

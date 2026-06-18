@@ -1,4 +1,7 @@
+"""app/gui/elements/logo_manager.py"""
+
 import tkinter as tk
+
 from PIL import Image, ImageTk
 
 from config.app_config import APP_LOGO
@@ -24,5 +27,5 @@ def setup_window_logo(window: tk.Tk):
         # Сохраняем ссылку на изображение, чтобы оно не было удалено сборщиком
         # мусора
         window.logo_photo = logo_photo
-    except Exception as e:
-        print(f"Ошибка загрузки логотипа: {e}")
+    except Exception as e:  # noqa: BLE001
+        print(f"Ошибка загрузки логотипа: {e}")  # noqa: T201

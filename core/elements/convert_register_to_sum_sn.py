@@ -1,12 +1,14 @@
-# app/core/elements/convert_register_to_sum_sn.py
+"""app/core/elements/convert_register_to_sum_sn.py"""
 
 import re
-from pathlib import Path
-from datetime import datetime
-from typing import Optional, Callable, List
 from collections import Counter, defaultdict, deque
+from datetime import datetime
+from pathlib import Path
+from typing import Callable, Optional
+
 import pandas as pd
-from openpyxl import load_workbook
+from openpyxl import Workbook, load_workbook
+from openpyxl.styles import Alignment, Font
 
 # ----------------------------------------------------------------------
 # Патч для openpyxl (игнорирование extLst)
@@ -29,7 +31,7 @@ def apply_openpyxl_patch():
 
         openpyxl.styles.fills.PatternFill._from_tree = patched_from_tree
         _openpyxl_patched = True
-    except Exception:
+    except Exception:  # noqa: BLE001
         pass
 
 
@@ -99,7 +101,7 @@ def get_additional_data(file_path, log_func):
         g22 = format_cell_value(ws['G22'].value)
         combined_ak = f"'{ak14}' от '{ak15}'" if ak14 or ak15 else ''
         return [i5, i9, e12, combined_ak, g22]
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         log_func(f"Ошибка извлечения доп. данных: {e}")
         return ['', '', '', '', '']
 
@@ -116,7 +118,7 @@ def check_numbering_order(df, name_col, log_func):
         if not number_col:
             return None
         numbers = []
-        for idx, row in df.iterrows():
+        for _, row in df.iterrows():
             if pd.isna(row[number_col]):
                 continue
             if pd.isna(row[name_col]) or str(row[name_col]).strip() == '':
@@ -138,7 +140,7 @@ def check_numbering_order(df, name_col, log_func):
         has_duplicates = len(numbers) != len(set(numbers))
         starts_from_one = min(numbers_sorted) == 1
         return (not has_gaps) and (not has_duplicates) and starts_from_one
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         log_func(f"Ошибка проверки нумерации: {e}")
         return None
 
@@ -188,7 +190,7 @@ def process_file(input_file_path, log_func):
         numbering_check = check_numbering_order(df, name_col, log_func)
         additional_data = get_additional_data(input_file_path, log_func)
         items_dict = {}
-        for idx, row in df.iterrows():
+        for _, row in df.iterrows():
             try:
                 item_name = (
                     '' if pd.isna(row[name_col])
@@ -237,7 +239,7 @@ def process_file(input_file_path, log_func):
 
 # ----------------------------------------------------------------------
 # Функции для ОС-15 (поддержка нескольких файлов)
-def find_oc15_files(oc15_folder: Path, normalized_id: str) -> List[Path]:
+def find_oc15_files(oc15_folder: Path, normalized_id: str) -> list[Path]:
     """
     Возвращает список всех файлов ОС-15 в указанной папке,
     имя которых начинается с числа, соответствующего normalized_id.
@@ -306,13 +308,13 @@ def process_oc15_file(
             f"Обработан файл ОС-15: {len(items_dict)} наименований", "info"
         )
         return items_dict
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         log_func(f"Ошибка обработки файла ОС-15 {file_path}: {e}", "error")
         return {}
 
 
 def process_oc15_files(
-    file_paths: List[Path], log_func: Optional[Callable] = None
+    file_paths: list[Path], log_func: Optional[Callable] = None
 ) -> dict:
     """
     Обрабатывает список файлов ОС-15, объединяя результаты.
@@ -488,9 +490,6 @@ def create_combined_verification_file(
     rma_dict: Optional[dict] = None,
     uploading_file_path: Optional[Path] = None
 ) -> None:
-    from openpyxl import Workbook
-    from openpyxl.styles import Font, Alignment
-
     left_rows, right_rows = align_items_dicts(
         items_dict_vso, items_dict_oc15, log_func
     )
@@ -712,7 +711,7 @@ def load_rma_data_for_id(
             "info"
         )
         return rma_dict
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         log_func(f"Ошибка загрузки RMA: {e}", "error")
         return {}
 
@@ -748,7 +747,7 @@ def check_serial_in_uploading_file(
     """
     Проверяет, встречается ли серийный номер в столбцах D,E,F,G (4-7)
     файла uploading_file.
-    Поиск прекращается после трёх подряд идущих строк, в которых
+    Поиск прекращается после десяти подряд идущих строк, в которых
     столбец A (1) пуст.
     Возвращает True, если серийный номер найден хотя бы один раз.
     """
@@ -771,7 +770,7 @@ def check_serial_in_uploading_file(
             cell_a = row[0] if len(row) > 0 else None
             if cell_a is None or str(cell_a).strip() == '':
                 empty_streak += 1
-                if empty_streak >= 3:
+                if empty_streak >= 10:
                     break           # достигнут конец данных
                 continue            # эту строку пропускаем (пустая)
             else:
@@ -793,7 +792,7 @@ def check_serial_in_uploading_file(
                 f"SN {serial} найден в файле {uploading_file.name}", "debug"
             )
         return found
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         if log_func:
             log_func(
                 f"Ошибка при проверке файла {uploading_file}: {e}", "error"

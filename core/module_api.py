@@ -1,8 +1,8 @@
-# app/core/module_api.py
+"""app/core/module_api.py"""
 
 import datetime
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Any, Callable, Optional, Union
 
 from core.elements.background_task import BackgroundTaskManager
 from core.elements.convert_register_to_list import transform_excel_list
@@ -12,7 +12,7 @@ from core.elements.pdf_finder import PDFFinder
 from core.elements.working_with_folders import (
     ensure_directory_exists,
     open_file_and_folder,
-    parse_file_path
+    parse_file_path,
 )
 
 
@@ -53,7 +53,7 @@ class ModuleAPI:
     def parse_file_path(
             self,
             file_path: Union[str, Path]
-    ) -> Tuple[Optional[str], Optional[str], Optional[str]]:
+    ) -> tuple[Optional[str], Optional[str], Optional[str]]:
         """
         Разбирает путь к файлу на базовую директорию, номер и аббревиатуру.
         """
@@ -64,19 +64,19 @@ class ModuleAPI:
     # ------------------------------------------------------------------
     def copy_files(
         self,
-        source_dirs: List[Tuple[Union[str, Path], Optional[List[str]]]],
+        source_dirs: list[tuple[Union[str, Path], Optional[list[str]]]],
         target_dir: Union[str, Path],
         overwrite: bool = True,
-        exclude_patterns: Optional[List[str]] = None
-    ) -> List[str]:
+        exclude_patterns: Optional[list[str]] = None
+    ) -> list[str]:
         """Копирует файлы из нескольких источников в целевую папку."""
         return copy_files(source_dirs, target_dir, overwrite, exclude_patterns)
 
     def download_pdfs(
         self,
-        files: List[Path],
+        files: list[Path],
         progress_callback: Optional[Callable[[int, int], None]] = None
-    ) -> Tuple[List[Path], Path]:
+    ) -> tuple[list[Path], Path]:
         """
         Скачивает PDF-файлы в папку 'Загрузки' с созданием подпапки по дате.
         """
@@ -121,7 +121,7 @@ class ModuleAPI:
         start_row: int = 2,
         validator: Optional[Callable] = None,
         default: Any = None
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Читает Excel-файл (поддерживаются .xlsx и .xlsb) и возвращает
         словарь соответствия из двух столбцов.
@@ -219,4 +219,4 @@ class ModuleAPI:
     def log(self, message: str, level: str = "info"):
         """Записывает сообщение в лог (пока только в консоль)."""
         timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        print(f"[{timestamp}] [API {level}] {message}")
+        print(f"[{timestamp}] [API {level}] {message}")  # noqa: T201
