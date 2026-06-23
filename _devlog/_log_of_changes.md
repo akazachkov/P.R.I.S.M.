@@ -1,4 +1,7 @@
 Лог изменений.
+23.06.2026 - v. 1.3.1
+1. Доработка convert_register_to_sum_sn.py с включением нового функционала при сверке ведомостей.
+
 18.06.2026 - v. 1.3.0
 1. Рефакторинг кода - module_api.py, convert_register_to_sum_sn.py, copy_files.py, excel_reader.py, pdf_finder.py, report_collector.py, working_with_folders.py, logo_manager.py и ещё ряд файлов по мелочи
 2. convert_register_to_sum_sn.py - теперь поиск прекращается после десяти подряд идущих строк, в которых столбец A (1) пуст (ранее для остановки было достаточно трёх строк).

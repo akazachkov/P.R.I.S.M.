@@ -16,6 +16,7 @@ _openpyxl_patched = False
 
 
 def apply_openpyxl_patch():
+    """Применяет патч для openpyxl, игнорируя extLst."""
     global _openpyxl_patched
     if _openpyxl_patched:
         return
@@ -36,6 +37,7 @@ def apply_openpyxl_patch():
 
 
 def safe_read_excel(file_path, **kwargs):
+    """Безопасное чтение Excel с автоматическим патчем при ошибке."""
     try:
         return pd.read_excel(file_path, **kwargs)
     except TypeError as e:
@@ -47,6 +49,7 @@ def safe_read_excel(file_path, **kwargs):
 
 
 def safe_load_workbook(file_path, **kwargs):
+    """Безопасная загрузка workbook с автоматическим патчем при ошибке."""
     try:
         return load_workbook(file_path, **kwargs)
     except TypeError as e:
@@ -58,8 +61,9 @@ def safe_load_workbook(file_path, **kwargs):
 
 
 # ----------------------------------------------------------------------
-# Вспомогательные функции
+# Вспомогательные функции для форматирования и сортировки
 def natural_sort_key(serial):
+    """Ключ для сортировки серийных номеров."""
     if not serial:
         return (0, '', '')
     parts = re.split(r'(\d+)', serial)
@@ -74,6 +78,10 @@ def natural_sort_key(serial):
 
 
 def format_cell_value(value):
+    """
+    Форматирует значение ячейки для корректного сравнения и отображения.
+    Возвращает строку с учетом формата даты.
+    """
     if value is None:
         return ''
     if isinstance(value, datetime):
@@ -89,34 +97,56 @@ def format_cell_value(value):
     return str(value).strip()
 
 
+# ----------------------------------------------------------------------
+# Извлечение дополнительных данных из файла
 def get_additional_data(file_path, log_func):
+    """
+    Извлекает данные из указанных ячеек файла.
+    Возвращает список значений: [i5, i9, e12, объединенные_ak14_ak15, g22].
+    """
     try:
         wb = safe_load_workbook(file_path, data_only=True)
         ws = wb.active
+
         i5 = format_cell_value(ws['I5'].value)
         i9 = format_cell_value(ws['I9'].value)
         e12 = format_cell_value(ws['E12'].value)
         ak14 = format_cell_value(ws['AK14'].value)
         ak15 = format_cell_value(ws['AK15'].value)
         g22 = format_cell_value(ws['G22'].value)
+
         combined_ak = f"'{ak14}' от '{ak15}'" if ak14 or ak15 else ''
         return [i5, i9, e12, combined_ak, g22]
     except Exception as e:  # noqa: BLE001
-        log_func(f"Ошибка извлечения доп. данных: {e}")
+        log_func(
+            "Ошибка извлечения доп. данных из: "
+            f"{Path(file_path).name}: {e}"
+        )
         return ['', '', '', '', '']
 
 
+# ----------------------------------------------------------------------
+# Проверка порядка нумерации
 def check_numbering_order(df, name_col, log_func):
+    """
+    Проверяет порядок нумерации позиций в исходном файле.
+    Возвращает True, если нумерация правильная, False если нарушена,
+    None если проверка не удалась.
+    """
     try:
         number_col = None
         possible_number_cols = ['№ п/п']
         for col in df.columns:
             col_clean = str(col).strip().lower()
-            if any(p.lower() in col_clean for p in possible_number_cols):
+            if any(
+                possible.lower() in col_clean
+                for possible in possible_number_cols
+            ):
                 number_col = col
                 break
         if not number_col:
             return None
+
         numbers = []
         for _, row in df.iterrows():
             if pd.isna(row[number_col]):
@@ -132,8 +162,10 @@ def check_numbering_order(df, name_col, log_func):
                         numbers.append(num_int)
             except (ValueError, TypeError):
                 continue
+
         if not numbers:
             return None
+
         numbers_sorted = sorted(numbers)
         expected = list(range(min(numbers_sorted), max(numbers_sorted) + 1))
         has_gaps = numbers_sorted != expected
@@ -148,47 +180,62 @@ def check_numbering_order(df, name_col, log_func):
 # ----------------------------------------------------------------------
 # Основная функция обработки ведомости (ВСО)
 def process_file(input_file_path, log_func):
+    """
+    Обрабатывает файл ведомости и возвращает данные по наименованиям.
+    Возвращает кортеж:
+        (items_dict, name_col, serial_col, numbering_check, additional_data,
+        missing_quantity_found)
+    """
+    missing_quantity_found = False
     try:
+        # Находим строку с заголовками
         header_row = -1
         target_headers = [
             'Наименование оборудования',
             'Серийный номер оборудования',
             'Количество, шт'
         ]
+
         df_preview = safe_read_excel(input_file_path, header=None, nrows=50)
+
         for row_idx in range(len(df_preview)):
             row_cells = [
-                str(cell).strip()
-                if not pd.isna(cell)
-                else '' for cell in df_preview.iloc[row_idx]
+                str(cell).strip() if not pd.isna(cell) else ''
+                for cell in df_preview.iloc[row_idx]
             ]
             if sum(target in row_cells for target in target_headers) == 3:
                 header_row = row_idx
                 break
+
         if header_row == -1:
             df = safe_read_excel(input_file_path)
         else:
             df = safe_read_excel(input_file_path, header=header_row)
+
         df.columns = [str(col).strip() for col in df.columns]
+
         name_col = serial_col = qty_col = None
         for col in df.columns:
             col_lower = col.lower()
-            if all(keyword in col_lower for keyword in (
-                'наименование', 'оборудования'
-            )):
+            if 'наименование' in col_lower and 'оборудования' in col_lower:
                 name_col = col
-            elif all(keyword in col_lower for keyword in (
-                'серийный', 'номер', 'оборудования'
-            )):
+            elif (
+                'серийный' in col_lower
+                and 'номер' in col_lower
+                and 'оборудования' in col_lower
+            ):
                 serial_col = col
-            elif all(keyword in col_lower for keyword in ('количество', 'шт')):
+            elif 'количество' in col_lower and 'шт' in col_lower:
                 qty_col = col
+
         if not all([name_col, serial_col, qty_col]):
             raise Exception(
                 f"Необходимые столбцы не найдены в файле {input_file_path}!"
             )
+
         numbering_check = check_numbering_order(df, name_col, log_func)
         additional_data = get_additional_data(input_file_path, log_func)
+
         items_dict = {}
         for _, row in df.iterrows():
             try:
@@ -200,38 +247,65 @@ def process_file(input_file_path, log_func):
                     '' if pd.isna(row[serial_col])
                     else str(row[serial_col]).strip()
                 )
-                qty = row[qty_col] if not pd.isna(row[qty_col]) else 0
+                qty = row[qty_col] if not pd.isna(row[qty_col]) else None
+
+                # Пропускаем строки без наименования
                 if pd.isna(item_name) or item_name == '':
                     continue
-                try:
-                    qty_str = str(qty).replace(',', '.')
-                    qty_clean = re.sub(r'[^\d.]', '', qty_str)
-                    qty_int = int(float(qty_clean)) if qty_clean else 0
-                except (ValueError, TypeError):
-                    continue
-                if qty_int <= 0:
-                    continue
+
+                # Разбор серийных номеров
                 serial_list = []
                 if serial_numbers and serial_numbers.lower() not in [
-                        '', 'nan', 'none']:
+                    '', 'nan', 'none'
+                ]:
                     serial_str = re.sub(r'[\n\r\t]+', '|', serial_numbers)
                     serial_str = re.sub(r'[,;]+', '|', serial_str)
                     serial_str = re.sub(r'\s+', '|', serial_str)
-                    for part in serial_str.split('|'):
+                    parts = serial_str.split('|')
+                    for part in parts:
                         part_clean = part.strip()
                         if part_clean and part_clean not in ['-', '—', '–']:
                             serial_list.append(part_clean)
+
+                # Обработка количества
+                qty_int = 0
+                if qty is not None:
+                    try:
+                        qty_str = str(qty).replace(',', '.')
+                        qty_clean = re.sub(r'[^\d.]', '', qty_str)
+                        qty_int = int(float(qty_clean)) if qty_clean else 0
+                    except (ValueError, TypeError):
+                        qty_int = 0
+
+                # Если количество не указано (или равно 0), но есть
+                # наименование и серийные номера
+                if qty_int == 0 and serial_list:
+                    missing_quantity_found = True
+                    # Не добавляем такую строку в словарь, но фиксируем факт
+                    continue
+
+                # Если количество <= 0 и нет серийных номеров - пропускаем
+                if qty_int <= 0 and not serial_list:
+                    continue
+
+                # Сортируем серийные номера
                 serial_list.sort(key=natural_sort_key)
+
                 if item_name not in items_dict:
                     items_dict[item_name] = {
-                        'serial_numbers': [], 'quantity': 0
+                        'serial_numbers': [],
+                        'quantity': 0
                     }
+
                 items_dict[item_name]['serial_numbers'].extend(serial_list)
                 items_dict[item_name]['quantity'] += qty_int
+
             except Exception:
                 continue
+
         return (
-            items_dict, name_col, serial_col, numbering_check, additional_data
+            items_dict, name_col, serial_col, numbering_check, additional_data,
+            missing_quantity_found
         )
     except Exception as e:
         raise Exception(f"Ошибка чтения файла {input_file_path}: {e}")
@@ -338,7 +412,7 @@ def process_oc15_files(
 
 
 # ----------------------------------------------------------------------
-# Функция выравнивания с логгированием несовпадений
+# Функция выравнивания с логированием несовпадений
 def align_items_dicts(items_dict_left, items_dict_right, log_func=None):
     """
     Выравнивает два словаря только по серийным номерам.
