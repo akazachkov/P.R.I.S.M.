@@ -2,9 +2,9 @@
 
 import re
 from collections import Counter, defaultdict, deque
+from collections.abc import Callable
 from datetime import datetime
 from pathlib import Path
-from typing import Callable, Optional
 
 import pandas as pd
 from openpyxl import Workbook, load_workbook
@@ -89,7 +89,7 @@ def format_cell_value(value):
     elif isinstance(value, (int, float)):
         try:
             if 0 < value < 100000:
-                excel_epoch = datetime(1899, 12, 30)
+                excel_epoch = datetime(1899, 12, 30)  # noqa: DTZ001
                 date_value = excel_epoch + pd.Timedelta(days=value)
                 return date_value.strftime("%d.%m.%Y")
         except (ValueError, TypeError, OverflowError):
@@ -332,7 +332,7 @@ def find_oc15_files(oc15_folder: Path, normalized_id: str) -> list[Path]:
 
 
 def process_oc15_file(
-    file_path: Path, log_func: Optional[Callable] = None
+    file_path: Path, log_func: Callable | None = None
 ) -> dict:
     """
     Обрабатывает один файл ОС-15, извлекает наименования и серийные номера.
@@ -388,7 +388,7 @@ def process_oc15_file(
 
 
 def process_oc15_files(
-    file_paths: list[Path], log_func: Optional[Callable] = None
+    file_paths: list[Path], log_func: Callable | None = None
 ) -> dict:
     """
     Обрабатывает список файлов ОС-15, объединяя результаты.
@@ -560,9 +560,9 @@ def create_combined_verification_file(
     items_dict_vso: dict,
     items_dict_oc15: dict,
     output_path: Path,
-    log_func: Optional[Callable] = None,
-    rma_dict: Optional[dict] = None,
-    uploading_file_path: Optional[Path] = None
+    log_func: Callable | None = None,
+    rma_dict: dict | None = None,
+    uploading_file_path: Path | None = None
 ) -> None:
     left_rows, right_rows = align_items_dicts(
         items_dict_vso, items_dict_oc15, log_func
@@ -704,7 +704,7 @@ def create_combined_verification_file(
 # ----------------------------------------------------------------------
 # Обработка информации по RMA
 def load_rma_data_for_id(
-    config: dict, normalized_id: str, log_func: Optional[Callable] = None
+    config: dict, normalized_id: str, log_func: Callable | None = None
 ) -> dict:
     """
     Загружает данные из файла RMA (rma_tab) только для строк,
@@ -794,7 +794,7 @@ def load_rma_data_for_id(
 # Функции для проверки серийных номеров в папке folder_uploading_data
 def find_newest_uploading_file(
     uploading_folder: Path, normalized_id: str
-) -> Optional[Path]:
+) -> Path | None:
     """
     Находит самый новый файл xlsx в папке uploading_folder,
     имя которого начинается с числа, соответствующего normalized_id (без

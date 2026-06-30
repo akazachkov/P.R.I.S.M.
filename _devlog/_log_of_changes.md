@@ -1,4 +1,7 @@
 Лог изменений.
+30.06.2026 - v. 1.3.1
+1. Рефакторинг кода - module_api.py, convert_register_to_sum_sn.py, copy_files.py
+
 23.06.2026 - v. 1.3.1
 1. Доработка convert_register_to_sum_sn.py с включением нового функционала при сверке ведомостей.
 

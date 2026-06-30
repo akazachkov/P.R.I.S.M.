@@ -1,8 +1,9 @@
 """app/core/module_api.py"""
 
 import datetime
+from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Callable, Optional, Union
+from typing import Any
 
 from core.elements.background_task import BackgroundTaskManager
 from core.elements.convert_register_to_list import transform_excel_list
@@ -28,7 +29,7 @@ class ModuleAPI:
     # ------------------------------------------------------------------
     # Конфигурация
     # ------------------------------------------------------------------
-    def get_config(self, key: str = None) -> Any:
+    def get_config(self, key: str | None = None) -> Any:
         """Возвращает значение конфигурации по ключу или весь словарь."""
         config = self._controller._config
         if key is None:
@@ -40,20 +41,20 @@ class ModuleAPI:
     # ------------------------------------------------------------------
     def ensure_directory_exists(
             self,
-            base_path: Union[str, Path],
+            base_path: str | Path,
             subfolder: str
     ) -> Path:
         """Создаёт поддиректорию, если её нет."""
         return ensure_directory_exists(base_path, subfolder)
 
-    def open_file_and_folder(self, path: Union[str, Path]) -> bool:
+    def open_file_and_folder(self, path: str | Path) -> bool:
         """Открывает файл или папку в проводнике."""
         return open_file_and_folder(path)
 
     def parse_file_path(
             self,
-            file_path: Union[str, Path]
-    ) -> tuple[Optional[str], Optional[str], Optional[str]]:
+            file_path: str | Path
+    ) -> tuple[str | None, str | None, str | None]:
         """
         Разбирает путь к файлу на базовую директорию, номер и аббревиатуру.
         """
@@ -64,10 +65,10 @@ class ModuleAPI:
     # ------------------------------------------------------------------
     def copy_files(
         self,
-        source_dirs: list[tuple[Union[str, Path], Optional[list[str]]]],
-        target_dir: Union[str, Path],
+        source_dirs: list[tuple[str | Path, list[str] | None]],
+        target_dir: str | Path,
         overwrite: bool = True,
-        exclude_patterns: Optional[list[str]] = None
+        exclude_patterns: list[str] | None = None
     ) -> list[str]:
         """Копирует файлы из нескольких источников в целевую папку."""
         return copy_files(source_dirs, target_dir, overwrite, exclude_patterns)
@@ -75,7 +76,7 @@ class ModuleAPI:
     def download_pdfs(
         self,
         files: list[Path],
-        progress_callback: Optional[Callable[[int, int], None]] = None
+        progress_callback: Callable[[int, int], None] | None = None
     ) -> tuple[list[Path], Path]:
         """
         Скачивает PDF-файлы в папку 'Загрузки' с созданием подпапки по дате.
@@ -88,15 +89,15 @@ class ModuleAPI:
     # ------------------------------------------------------------------
     def transform_excel_list(
             self,
-            input_fn: Union[str, Path],
-            output_file: Union[str, Path]
+            input_fn: str | Path,
+            output_file: str | Path
     ) -> None:
         """Преобразует ведомость в список оборудования."""
         transform_excel_list(input_fn, output_file)
 
     def process_register_file(
-        self, file_path: Union[str, Path],
-        log_func: Optional[Callable[[str], None]] = None
+        self, file_path: str | Path,
+        log_func: Callable[[str], None] | None = None
     ):
         """
         Обрабатывает файл ведомости и возвращает данные по наименованиям.
@@ -114,12 +115,12 @@ class ModuleAPI:
 
     def read_excel_mapping(
         self,
-        file_path: Union[str, Path],
+        file_path: str | Path,
         sheet_name: str,
         key_col: int,
         value_col: int,
         start_row: int = 2,
-        validator: Optional[Callable] = None,
+        validator: Callable | None = None,
         default: Any = None
     ) -> dict[str, Any]:
         """
@@ -182,8 +183,8 @@ class ModuleAPI:
     def run_in_background(
         self,
         target: Callable,
-        on_success: Optional[Callable] = None,
-        on_error: Optional[Callable] = None,
+        on_success: Callable | None = None,
+        on_error: Callable | None = None,
         *args,
         **kwargs
     ) -> None:
@@ -218,5 +219,7 @@ class ModuleAPI:
     # ------------------------------------------------------------------
     def log(self, message: str, level: str = "info"):
         """Записывает сообщение в лог (пока только в консоль)."""
-        timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        timestamp = datetime.datetime.now(datetime.UTC).strftime(
+            "%Y-%m-%d %H:%M:%S"
+        )
         print(f"[{timestamp}] [API {level}] {message}")  # noqa: T201

@@ -2,15 +2,15 @@
 
 import datetime
 import shutil
+from collections.abc import Callable
 from pathlib import Path
-from typing import Callable, Optional, Union
 
 
 def copy_files(
-    source_dirs: list[tuple[Union[str, Path], Optional[list[str]]]],
-    target_dir: Union[str, Path],
+    source_dirs: list[tuple[str | Path, list[str] | None]],
+    target_dir: str | Path,
     overwrite: bool = True,
-    exclude_patterns: Optional[list[str]] = None
+    exclude_patterns: list[str] | None = None
 ) -> list[str]:
     """
     Универсальная функция для копирования файлов из нескольких директорий.
@@ -76,14 +76,16 @@ def copy_files(
                     f"Из {source_path.name} - {file.name}"
                 )
             except Exception as e:  # noqa: BLE001
-                results.append(f"Ошибка копирования {file.name}: {str(e)}")
-    return results if results else ["Нет файлов для копирования"]
+                results.append(
+                    f"Ошибка копирования {file.name}: {str(e)}"  # noqa: RUF010
+                )
+    return results or ["Нет файлов для копирования"]
 
 
 def download_pdfs(
     files: list[Path],
     api,
-    progress_callback: Optional[Callable[[int, int], None]] = None
+    progress_callback: Callable[[int, int], None] | None = None
 ) -> tuple[list[Path], Path]:
     """
     Копирование PDF-файлов в папку "Загрузки" в подпапку с текущей датой.
@@ -98,7 +100,7 @@ def download_pdfs(
     Returns:
         кортеж (список скопированных файлов, путь к созданной папке)
     """
-    current_date = datetime.datetime.now().strftime("%Y.%m.%d")
+    current_date = datetime.datetime.now(datetime.UTC).strftime("%Y.%m.%d")
     folder_name = f"{current_date} Скачанные PDF"
     downloads_dir = Path.home() / "Downloads" / folder_name
 
