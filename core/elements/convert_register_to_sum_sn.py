@@ -300,7 +300,8 @@ def process_file(input_file_path, log_func):
                 items_dict[item_name]['serial_numbers'].extend(serial_list)
                 items_dict[item_name]['quantity'] += qty_int
 
-            except Exception:
+            except Exception as e:  # noqa: BLE001
+                log_func(f"Ошибка в строке: {e}", "error")
                 continue
 
         return (
@@ -308,7 +309,7 @@ def process_file(input_file_path, log_func):
             missing_quantity_found
         )
     except Exception as e:
-        raise Exception(f"Ошибка чтения файла {input_file_path}: {e}")
+        raise Exception(f"Ошибка чтения файла {input_file_path}: {e}") from e
 
 
 # ----------------------------------------------------------------------
@@ -604,7 +605,7 @@ def create_combined_verification_file(
 
     # Заполнение данными
     for i, (left_row, right_row) in enumerate(
-        zip(left_rows, right_rows), start=1
+        zip(left_rows, right_rows, strict=False), start=1
     ):
         left_name, left_serial = left_row
         row_num = i + 1
@@ -693,7 +694,11 @@ def create_combined_verification_file(
             try:
                 if len(str(cell.value)) > max_len:
                     max_len = len(str(cell.value))
-            except Exception:
+            except (AttributeError, TypeError) as e:
+                log_func(
+                    f"Ошибка чтения ячейки ({row},{col_idx}): {e}",
+                    "error"
+                )
                 continue
         adjusted_width = min(max_len + 2, 50)
         ws.column_dimensions[col_letter].width = adjusted_width
