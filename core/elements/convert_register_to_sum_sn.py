@@ -855,8 +855,8 @@ def check_serial_in_uploading_file(
             else:
                 empty_streak = 0    # сброс, т.к. столбец A непуст
 
-            # Поиск серийного номера в столбцах D–G (индексы 3,4,5,6)
-            for cell_value in row[3:7]:
+            # Поиск серийного номера в столбцах C–G (индексы 2,3,4,5,6)
+            for cell_value in row[2:7]:
                 if cell_value is not None:
                     cell_str = format_cell_value(cell_value)
                     if serial == cell_str:
