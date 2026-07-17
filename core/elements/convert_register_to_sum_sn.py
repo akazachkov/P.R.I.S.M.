@@ -824,10 +824,9 @@ def check_serial_in_uploading_file(
     uploading_file: Path, serial: str, log_func=None
 ) -> bool:
     """
-    Проверяет, встречается ли серийный номер в столбцах D,E,F,G (4-7)
-    файла uploading_file.
+    Проверяет, встречается ли серийный номер в столбцах файла uploading_file.
     Поиск прекращается после десяти подряд идущих строк, в которых
-    столбец A (1) пуст.
+    столбец A пуст.
     Возвращает True, если серийный номер найден хотя бы один раз.
     """
     if not uploading_file or not uploading_file.exists():
@@ -843,8 +842,8 @@ def check_serial_in_uploading_file(
         found = False
         empty_streak = 0
 
-        # Читаем строки, получаем значения столбцов A–G
-        for row in ws.iter_rows(min_row=1, max_col=7, values_only=True):
+        # Читаем строки, получаем значения столбцов с 1 по 8
+        for row in ws.iter_rows(min_row=1, max_col=8, values_only=True):
             # Проверка столбца A (индекс 0)
             cell_a = row[0] if len(row) > 0 else None
             if cell_a is None or str(cell_a).strip() == '':
@@ -855,8 +854,8 @@ def check_serial_in_uploading_file(
             else:
                 empty_streak = 0    # сброс, т.к. столбец A непуст
 
-            # Поиск серийного номера в столбцах C–G (индексы 2,3,4,5,6)
-            for cell_value in row[2:7]:
+            # Поиск серийного номера в столбцах C–H (индексы 2,3,4,5,6,7)
+            for cell_value in row[2:8]:
                 if cell_value is not None:
                     cell_str = format_cell_value(cell_value)
                     if serial == cell_str:
