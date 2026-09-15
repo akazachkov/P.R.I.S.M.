@@ -1,11 +1,13 @@
 """app/app.py"""
 
+import logging
 import sys
-import traceback
 
 from config.app_config import CONFIG_PATHS_NAME
 from core.app_controller import AppController
 from gui.main_window import MainWindow
+
+logger = logging.getLogger(__name__)
 
 
 def main():
@@ -17,9 +19,8 @@ def main():
 
         # Запускаем GUI цикл
         app.mainloop()
-    except Exception as e:  # noqa: BLE001
-        print("Ошибка при запуске приложения:", e)  # noqa: T201
-        traceback.print_exc()
+    except Exception:
+        logger.exception("Ошибка при запуске приложения")
         sys.exit(1)
 
 
