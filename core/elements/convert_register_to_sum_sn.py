@@ -4,11 +4,13 @@ import re
 from collections import Counter, defaultdict, deque
 from collections.abc import Callable
 from datetime import datetime
+from functools import lru_cache
 from pathlib import Path
 
 import pandas as pd
 from openpyxl import Workbook, load_workbook
 from openpyxl.styles import Alignment, Font
+from pypdf import PdfReader
 
 # ----------------------------------------------------------------------
 # Патч для openpyxl (игнорирование extLst)
@@ -623,7 +625,7 @@ def create_combined_verification_file(
                 ws.cell(row=row_num, column=4, value=cell_text)
             else:
                 ws.cell(row=row_num, column=4, value="")
-        # Статус загрузки (если есть файл)
+        # Статус выгрузки (если есть файл)
         if uploading_file_path and left_serial:
             # Проверяем наличие серийного номера (с логированием)
             found = check_serial_in_uploading_file(
@@ -739,7 +741,6 @@ def load_rma_data_for_id(
         # Читаем заголовки из строки 3 для столбцов K(11) и L(12)
         header_k = format_cell_value(ws.cell(row=3, column=11).value) or "K"
         header_l = format_cell_value(ws.cell(row=3, column=12).value) or "L"
-        log_func(f"Заголовки RMA: K='{header_k}', L='{header_l}'", "debug")
 
         # Промежуточный словарь:
         # serial -> [значение_I, список_уникальных_заголовков]
@@ -801,7 +802,7 @@ def find_newest_uploading_file(
     uploading_folder: Path, normalized_id: str
 ) -> Path | None:
     """
-    Находит самый новый файл xlsx в папке uploading_folder,
+    Находит самый новый файл pdf в папке uploading_folder,
     имя которого начинается с числа, соответствующего normalized_id (без
     ведущих нулей).
     """
@@ -809,7 +810,7 @@ def find_newest_uploading_file(
         return None
     id_raw = str(int(normalized_id))  # Убираем ведущие нули
     candidates = []
-    for file_path in uploading_folder.glob("*.xlsx"):
+    for file_path in uploading_folder.glob("*.pdf"):
         first_part = file_path.stem.split()[0] if file_path.stem else ""
         digits = re.sub(r'\D', '', first_part)
         if digits and int(digits) == int(id_raw):
@@ -820,56 +821,56 @@ def find_newest_uploading_file(
     return max(candidates, key=lambda p: p.stat().st_mtime)
 
 
+@lru_cache(maxsize=1)
+def _extract_pdf_tokens(pdf_path: str, mtime: float) -> dict[str, int]:
+    """
+    Извлекает все токены из PDF один раз.
+    Возвращает словарь {токен: номер_страницы_первого_вхождения}.
+    Параметр mtime участвует в ключе кэша: если файл изменится,
+    кэш автоматически станет невалидным.
+    """
+    tokens: dict[str, int] = {}
+    reader = PdfReader(pdf_path)
+    for page_number, page in enumerate(reader.pages, start=1):
+        text = page.extract_text()
+        if text:
+            for token in text.split():
+                tokens.setdefault(token, page_number)
+    return tokens
+
+
 def check_serial_in_uploading_file(
     uploading_file: Path, serial: str, log_func=None
 ) -> bool:
     """
-    Проверяет, встречается ли серийный номер в столбцах файла uploading_file.
-    Поиск прекращается после десяти подряд идущих строк, в которых
-    столбец A пуст.
+    Проверяет, встречается ли серийный номер в файле из папки uploading_file.
+    Текст файла извлекается один раз и кэшируется; повторные вызовы для того же
+    файла выполняются мгновенно (O(1)).
     Возвращает True, если серийный номер найден хотя бы один раз.
     """
-    if not uploading_file or not uploading_file.exists():
+    if not serial or not serial.strip():
         if log_func:
             log_func(
-                f"Файл для проверки загрузки не существует: {uploading_file}",
-                "warning"
+                f"Пустой серийный номер, проверка файла "
+                f"{uploading_file.name} пропущена", "warning"
             )
         return False
+
     try:
-        wb = safe_load_workbook(uploading_file, data_only=True, read_only=True)
-        ws = wb.active
-        found = False
-        empty_streak = 0
+        mtime = uploading_file.stat().st_mtime
+        tokens = _extract_pdf_tokens(str(uploading_file), mtime)
 
-        # Читаем строки, получаем значения столбцов с 1 по 8
-        for row in ws.iter_rows(min_row=1, max_col=8, values_only=True):
-            # Проверка столбца A (индекс 0)
-            cell_a = row[0] if len(row) > 0 else None
-            if cell_a is None or str(cell_a).strip() == '':
-                empty_streak += 1
-                if empty_streak >= 10:
-                    break           # достигнут конец данных
-                continue            # эту строку пропускаем (пустая)
-            else:
-                empty_streak = 0    # сброс, т.к. столбец A непуст
+        page_number = tokens.get(serial)
+        if page_number is not None:
+            # if log_func:
+            #     log_func(
+            #         f"SN {serial} найден в файле "
+            #         f"{uploading_file.name} (стр. {page_number})",
+            #         "debug",
+            #     )
+            return True
+        return False
 
-            # Поиск серийного номера в столбцах C–H (индексы 2,3,4,5,6,7)
-            for cell_value in row[2:8]:
-                if cell_value is not None:
-                    cell_str = format_cell_value(cell_value)
-                    if serial == cell_str:
-                        found = True
-                        break
-            if found:
-                break
-
-        wb.close()
-        if log_func and found:
-            log_func(
-                f"SN {serial} найден в файле {uploading_file.name}", "debug"
-            )
-        return found
     except Exception as e:  # noqa: BLE001
         if log_func:
             log_func(

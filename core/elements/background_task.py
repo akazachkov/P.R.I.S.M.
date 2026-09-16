@@ -1,10 +1,13 @@
 """app/core/elements/background_task.py"""
 
+import logging
 import threading
 import traceback
 from collections.abc import Callable
 from tkinter import messagebox
 from typing import Any
+
+logger = logging.getLogger(__name__)
 
 
 class BackgroundTaskManager:
@@ -45,12 +48,15 @@ class BackgroundTaskManager:
                 result = target(*args, **kwargs)
                 if on_success:
                     self._api.schedule_gui_task(on_success, result)
-            except Exception as e:  # noqa: BLE001
+            except Exception as e:
                 # Формируем подробное сообщение об ошибке
                 error_msg = (
                     f"{type(e).__name__}: {e}\n{traceback.format_exc()}"
                 )
                 self._api.log(error_msg, "error")
+
+                # Отдельный вызов логера для Ruff и трейсбека
+                logger.exception("Ошибка при выполнении фоновой задачи")
 
                 if on_error:
                     # Если передан пользовательский обработчик ошибок
